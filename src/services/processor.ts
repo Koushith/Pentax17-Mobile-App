@@ -1,21 +1,15 @@
 import { ImageFormat, Skia, TileMode } from "@shopify/react-native-skia";
 import RNFS from 'react-native-fs';
+import { FILM_STOCKS } from './filters';
 
-// Kodak Gold 200-ish Matrix
-const COLOR_MATRIX = [
-    1.1, 0.1, 0.0, 0.0, 0,
-    0.0, 1.0, 0.0, 0.0, 0,
-    0.0, 0.1, 0.8, 0.0, 0,
-    0.0, 0.0, 0.0, 1.0, 0
-];
-
-export const processAndSavePhoto = async (originalPath: string): Promise<string> => {
+export const processAndSavePhoto = async (imagePath: string, filmId: string = 'kodak_gold_200'): Promise<string> => {
   try {
     // 1. Read file
     // Ensure path format is correct for RNFS
-    const cleanPath = originalPath.startsWith('file://') ? originalPath.replace('file://', '') : originalPath;
-    const base64 = await RNFS.readFile(cleanPath, 'base64');
-    const data = Skia.Data.fromBase64(base64);
+    const cleanPath = imagePath.startsWith('file://') ? imagePath.replace('file://', '') : imagePath;
+    const fileContent = await RNFS.readFile(cleanPath, 'base64');
+    const inputBytes = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0));
+    const data = Skia.Data.fromBytes(inputBytes);
     const image = Skia.Image.MakeImageFromEncoded(data);
     
     if (!image) throw new Error("Could not decode image");
@@ -24,14 +18,18 @@ export const processAndSavePhoto = async (originalPath: string): Promise<string>
     const height = image.height();
     
     // 2. Create Surface
-    const surface = Skia.Surface.MakeOffscreen(width, height);
+    const surface = Skia.Surface.Make(width, height);
     if (!surface) throw new Error("Could not create surface");
     
     const canvas = surface.getCanvas();
     
     // 3. Draw Image with Color Matrix
+    // Apply Film Filter
+    const selectedFilm = FILM_STOCKS.find(f => f.id === filmId) || FILM_STOCKS[0];
     const paint = Skia.Paint();
-    paint.setColorFilter(Skia.ColorFilter.MakeMatrix(COLOR_MATRIX));
+    paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
+    
+    // Draw the image with the filter applied
     canvas.drawImage(image, 0, 0, paint);
     
     // 4. Draw Vignette
@@ -55,22 +53,24 @@ export const processAndSavePhoto = async (originalPath: string): Promise<string>
     
     // 5. Snapshot and Save
     const snapshot = surface.makeImageSnapshot();
-    const bytes = snapshot.encodeToBytes(ImageFormat.JPEG, 90);
+    const outputBytes = snapshot.encodeToBytes(ImageFormat.JPEG, 90);
     
-    if (!bytes) throw new Error("Could not encode image");
+    if (!outputBytes) throw new Error("Could not encode image");
 
-    const encodedData = Skia.Data.fromBytes(bytes);
-    const base64Output = (encodedData as any).toBase64String();
+    // Custom Base64 conversion since toBase64String might be missing
+    let binary = '';
+    const len = outputBytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(outputBytes[i]);
+    }
+    const base64Output = btoa(binary);
     
     const newPath = cleanPath.replace('.jpg', '_processed.jpg');
     await RNFS.writeFile(newPath, base64Output, 'base64');
     
-    // Optionally delete original?
-    // await RNFS.unlink(cleanPath);
-    
     return `file://${newPath}`;
   } catch (e) {
     console.error("Failed to process photo", e);
-    return originalPath; // Fallback to original
+    return imagePath; // Fallback to original
   }
 };

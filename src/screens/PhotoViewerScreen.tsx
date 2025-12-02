@@ -35,12 +35,17 @@ export default function PhotoViewerScreen() {
     <View style={styles.container}>
       <Image source={{ uri: photo.uri }} style={styles.image} resizeMode="contain" />
       
+      {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.button}>
-          <Text style={styles.buttonText}>Back</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+          <Text style={styles.iconText}>{'<'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete} style={styles.button}>
-          <Text style={[styles.buttonText, { color: 'red' }]}>Delete</Text>
+      </View>
+
+      {/* Bottom Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+          <Text style={styles.deleteText}>DELETE</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -54,24 +59,49 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   topBar: {
     position: 'absolute',
     top: 50,
+    left: 20,
+    zIndex: 10,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 22,
+  },
+  iconText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '300',
+    marginTop: -2, // Visual adjustment
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 40,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButton: {
     paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 0, 0, 0.5)',
   },
-  button: {
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
+  deleteText: {
+    color: '#FF4444',
+    fontSize: 12,
     fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });

@@ -1,19 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CameraRoll } from "@react-native-camera-roll/camera-roll";
 import RNFS from 'react-native-fs';
 import { Photo } from '../types';
 
-const PHOTOS_KEY = '@cam_app_photos';
+const PHOTOS_KEY = 'photos_metadata';
 
-export const savePhoto = async (tempUri: string, width: number, height: number): Promise<Photo> => {
+export const savePhoto = async (path: string, width: number, height: number): Promise<Photo> => {
+  // 1. Save to System Gallery (Camera Roll)
+  try {
+    // Explicitly check/request permission first
+    // Note: CameraRoll.saveAsset usually handles this, but explicit request is safer
+    // We'll rely on the library's internal permission handling which should trigger the prompt
+    // Ensure path is clean
+    const cleanPath = path.startsWith('file://') ? path : `file://${path}`;
+    await CameraRoll.saveAsset(cleanPath, { type: 'photo' });
+    console.log('Saved to Camera Roll');
+  } catch (error) {
+    console.error('Failed to save to Camera Roll:', error);
+  }
+
+  // 2. Continue with internal app storage logic...
   const timestamp = Date.now();
-  const fileName = `photo_${timestamp}.jpg`;
+  const fileName = `photo_${timestamp}.jpg`; // Use a new unique filename for internal storage
   const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-  // Ensure the file exists before moving? moveFile throws if source doesn't exist.
-  // tempUri might be file://...
-  const cleanTempUri = tempUri.startsWith('file://') ? tempUri.replace('file://', '') : tempUri;
+  // Copy the photo from its temporary location (or original path) to the app's document directory
+  // The 'path' parameter here is the source URI, which might be a temporary file.
+  const cleanSourcePath = path.startsWith('file://') ? path.replace('file://', '') : path;
   
-  await RNFS.moveFile(cleanTempUri, destPath);
+  await RNFS.copyFile(cleanSourcePath, destPath);
 
   const newPhoto: Photo = {
     id: timestamp.toString(),
