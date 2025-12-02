@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CameraScreen from './src/screens/CameraScreen';
 import GalleryScreen from './src/screens/GalleryScreen';
 import PhotoViewerScreen from './src/screens/PhotoViewerScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import { RootStackParamList, COLORS } from './src/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -54,6 +55,11 @@ function App(): React.JSX.Element {
             name="PhotoViewer"
             component={PhotoViewerScreen}
             options={{ animation: 'fade' }}
+          />
+          <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

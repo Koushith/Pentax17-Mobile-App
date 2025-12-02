@@ -5,6 +5,45 @@ import { getFilmStockById } from './filters';
 // Pentax 17 half-frame aspect ratio: 17x24mm = 2:3 vertical
 const HALF_FRAME_ASPECT_RATIO = 2 / 3;
 
+// Cache for loaded typeface
+let cachedTypeface: ReturnType<typeof Skia.Typeface.MakeFreeTypeFaceFromData> | null = null;
+
+// Load Departure Mono font from bundle
+const loadDepartureMonoFont = async (): Promise<ReturnType<typeof Skia.Typeface.MakeFreeTypeFaceFromData> | null> => {
+  if (cachedTypeface) return cachedTypeface;
+
+  try {
+    // Font is bundled with the app via react-native.config.js
+    // Try to load from the main bundle
+    const fontPath = `${RNFS.MainBundlePath}/DepartureMono-Regular.otf`;
+    const exists = await RNFS.exists(fontPath);
+
+    if (exists) {
+      const fontData = await RNFS.readFile(fontPath, 'base64');
+      const bytes = Uint8Array.from(atob(fontData), c => c.charCodeAt(0));
+      const skiaData = Skia.Data.fromBytes(bytes);
+      cachedTypeface = Skia.Typeface.MakeFreeTypeFaceFromData(skiaData);
+      console.log('Loaded Departure Mono font successfully');
+      return cachedTypeface;
+    }
+    console.log('Font file not found at:', fontPath);
+  } catch (e) {
+    console.log('Failed to load Departure Mono font:', e);
+  }
+  return null;
+};
+
+// Helper to create a font
+const createFont = (size: number, typeface: ReturnType<typeof Skia.Typeface.MakeFreeTypeFaceFromData> | null) => {
+  if (typeface) {
+    return Skia.Font(typeface, size);
+  }
+  // Fallback to system font
+  const fontMgr = Skia.FontMgr.System();
+  const fallbackTypeface = fontMgr.matchFamilyStyle('Courier', { weight: 400, width: 5, slant: 0 });
+  return Skia.Font(fallbackTypeface, size);
+};
+
 // Polaroid frame dimensions (relative to image)
 const POLAROID_BORDER = 0.04; // 4% border on sides and top
 const POLAROID_BOTTOM = 0.15; // 15% bottom for text
@@ -44,6 +83,9 @@ export const processAndSavePhoto = async (
 ): Promise<{ path: string; width: number; height: number }> => {
   try {
     console.log('Processing photo:', imagePath);
+
+    // Load custom font for text rendering
+    const customTypeface = await loadDepartureMonoFont();
 
     // 1. Read file
     const cleanPath = imagePath.startsWith('file://') ? imagePath.replace('file://', '') : imagePath;
@@ -165,7 +207,7 @@ export const processAndSavePhoto = async (
       const dateText = formatDateStamp();
       const fontSize = Math.floor(cropHeight * 0.035);
 
-      const dateFont = Skia.Font(undefined, fontSize);
+      const dateFont = createFont(fontSize, customTypeface);
       const datePaint = Skia.Paint();
       datePaint.setColor(Skia.Color('#FF6B35')); // Orange/amber date stamp color
 
@@ -183,41 +225,46 @@ export const processAndSavePhoto = async (
 
     // 11. Add Polaroid text if enabled
     if (options.addPolaroidFrame) {
+      console.log('Adding Polaroid text, location:', options.location);
       const borderSize = Math.floor(cropWidth * POLAROID_BORDER);
-      const bottomY = imageOffsetY + cropHeight + borderSize * 0.3;
+      const bottomAreaStart = imageOffsetY + cropHeight;
+      const bottomAreaHeight = outputHeight - bottomAreaStart;
+      console.log('Bottom area:', bottomAreaStart, 'to', outputHeight, 'height:', bottomAreaHeight);
 
-      // Date and time
+      // Date and time - positioned nicely in bottom area
       const dateText = formatPolaroidDate();
-      const dateFontSize = Math.floor(outputWidth * 0.032);
-      const dateFont = Skia.Font(undefined, dateFontSize);
+      console.log('Date text:', dateText);
+      const dateFontSize = Math.floor(outputWidth * 0.035);
+      const dateFont = createFont(dateFontSize, customTypeface);
+      console.log('Date font created, size:', dateFontSize);
       const datePaint = Skia.Paint();
-      datePaint.setColor(Skia.Color('#333333'));
+      datePaint.setColor(Skia.Color('#2C2C2C'));
 
-      const dateX = imageOffsetX;
-      const dateY = bottomY + dateFontSize * 1.8;
+      const dateX = borderSize * 1.5;
+      const dateY = bottomAreaStart + bottomAreaHeight * 0.45;
       canvas.drawText(dateText, dateX, dateY, datePaint, dateFont);
 
-      // Location if provided
+      // Location if provided - below the date
       if (options.location) {
-        const locationFontSize = Math.floor(outputWidth * 0.026);
-        const locationFont = Skia.Font(undefined, locationFontSize);
+        const locationFontSize = Math.floor(outputWidth * 0.028);
+        const locationFont = createFont(locationFontSize, customTypeface);
         const locationPaint = Skia.Paint();
-        locationPaint.setColor(Skia.Color('#777777'));
+        locationPaint.setColor(Skia.Color('#666666'));
 
-        const locationY = dateY + locationFontSize * 1.6;
+        const locationY = dateY + locationFontSize * 1.8;
         canvas.drawText(options.location, dateX, locationY, locationPaint, locationFont);
       }
 
-      // Film stock watermark (small, bottom right)
-      const filmFontSize = Math.floor(outputWidth * 0.02);
-      const filmFont = Skia.Font(undefined, filmFontSize);
+      // Film stock watermark (small, bottom right corner)
+      const filmFontSize = Math.floor(outputWidth * 0.022);
+      const filmFont = createFont(filmFontSize, customTypeface);
       const filmPaint = Skia.Paint();
-      filmPaint.setColor(Skia.Color('#BBBBBB'));
+      filmPaint.setColor(Skia.Color('#AAAAAA'));
 
       const filmText = selectedFilm.label;
       const filmBounds = filmFont.measureText(filmText);
-      const filmX = outputWidth - borderSize - filmBounds.width;
-      const filmY = outputHeight - borderSize * 0.6;
+      const filmX = outputWidth - borderSize * 1.5 - filmBounds.width;
+      const filmY = bottomAreaStart + bottomAreaHeight * 0.75;
       canvas.drawText(filmText, filmX, filmY, filmPaint, filmFont);
     }
 

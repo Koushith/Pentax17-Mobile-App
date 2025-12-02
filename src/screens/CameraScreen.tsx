@@ -18,6 +18,13 @@ import {
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+// Safe import of geolocation - will gracefully handle if not available
+let Geolocation: any = null;
+try {
+  Geolocation = require('react-native-geolocation-service').default;
+} catch (e) {
+  console.log('Geolocation not available');
+}
 import { RootStackParamList, FlashMode, CameraPosition, COLORS } from '../types';
 import { savePhoto, getSettings, saveSettings } from '../services/storage';
 import { processAndSavePhoto } from '../services/processor';
@@ -50,9 +57,11 @@ const GalleryIcon = () => (
 
 const FlipIcon = () => (
   <View style={iconStyles.flipContainer}>
-    <View style={iconStyles.flipArrow1} />
-    <View style={iconStyles.flipArrow2} />
-    <View style={iconStyles.flipCenter} />
+    <View style={iconStyles.flipCamera}>
+      <View style={iconStyles.flipLens} />
+    </View>
+    <View style={iconStyles.flipArrowTop} />
+    <View style={iconStyles.flipArrowBottom} />
   </View>
 );
 
@@ -73,6 +82,23 @@ const PolaroidIcon = ({ active }: { active: boolean }) => (
   </View>
 );
 
+const SettingsIcon = () => (
+  <View style={iconStyles.settingsContainer}>
+    <View style={iconStyles.sliderRow}>
+      <View style={iconStyles.sliderLine} />
+      <View style={[iconStyles.sliderDot, { left: 4 }]} />
+    </View>
+    <View style={iconStyles.sliderRow}>
+      <View style={iconStyles.sliderLine} />
+      <View style={[iconStyles.sliderDot, { right: 4 }]} />
+    </View>
+    <View style={iconStyles.sliderRow}>
+      <View style={iconStyles.sliderLine} />
+      <View style={[iconStyles.sliderDot, { left: 8 }]} />
+    </View>
+  </View>
+);
+
 export default function CameraScreen() {
   const navigation = useNavigation<CameraScreenNavigationProp>();
   const device = useCameraDevice('back');
@@ -89,6 +115,7 @@ export default function CameraScreen() {
   const [dateStampEnabled, setDateStampEnabled] = useState(false);
   const [polaroidEnabled, setPolaroidEnabled] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<string | undefined>(undefined);
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   const [showFilmPicker, setShowFilmPicker] = useState(false);
   const shutterScale = useRef(new Animated.Value(1)).current;
@@ -113,6 +140,20 @@ export default function CameraScreen() {
     }
   }, [hasPermission]);
 
+  // Request location permission at startup
+  useEffect(() => {
+    const requestAllPermissions = async () => {
+      if (Geolocation) {
+        try {
+          await requestLocationPermission();
+        } catch (e) {
+          console.log('Location permission request failed:', e);
+        }
+      }
+    };
+    requestAllPermissions();
+  }, []);
+
   // Get location when Polaroid mode is enabled
   useEffect(() => {
     if (polaroidEnabled) {
@@ -120,13 +161,83 @@ export default function CameraScreen() {
     }
   }, [polaroidEnabled]);
 
-  const getLocation = async () => {
+  const requestLocationPermission = async (): Promise<boolean> => {
+    if (!Geolocation) return false;
+
+    if (Platform.OS === 'ios') {
+      const status = await Geolocation.requestAuthorization('whenInUse');
+      return status === 'granted';
+    } else {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
-      // For now, use a placeholder - in production you'd use react-native-geolocation
-      // and reverse geocode to get the location name
-      setCurrentLocation('San Francisco, CA');
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14`
+      );
+      const data = await response.json();
+
+      if (data.address) {
+        const { city, town, village, suburb, county, state, country } = data.address;
+        const place = city || town || village || suburb || county;
+        const region = state || country;
+
+        if (place && region) {
+          return `${place}, ${region}`;
+        } else if (place) {
+          return place;
+        } else if (region) {
+          return region;
+        }
+      }
+      return 'Unknown Location';
     } catch (error) {
-      console.log('Location not available');
+      console.log('Reverse geocode error:', error);
+      return 'Unknown Location';
+    }
+  };
+
+  const getLocation = async () => {
+    if (!Geolocation) {
+      setLocationPermissionDenied(true);
+      setCurrentLocation(undefined);
+      return;
+    }
+
+    try {
+      const hasPermission = await requestLocationPermission();
+
+      if (!hasPermission) {
+        setLocationPermissionDenied(true);
+        setCurrentLocation(undefined);
+        return;
+      }
+
+      setLocationPermissionDenied(false);
+
+      Geolocation.getCurrentPosition(
+        async (position: { coords: { latitude: number; longitude: number } }) => {
+          const { latitude, longitude } = position.coords;
+          const locationName = await reverseGeocode(latitude, longitude);
+          setCurrentLocation(locationName);
+        },
+        (error: { code: number; message: string }) => {
+          console.log('Geolocation error:', error);
+          setCurrentLocation(undefined);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 60000,
+        }
+      );
+    } catch (error) {
+      console.log('Location not available:', error);
       setCurrentLocation(undefined);
     }
   };
@@ -162,12 +273,20 @@ export default function CameraScreen() {
       setIsProcessing(true);
       setIsTakingPhoto(false);
 
+      // Get location for Polaroid frame (no fallback - just show date/time if no location)
+      const getLocation = (): string | undefined => {
+        if (!polaroidEnabled) return undefined;
+        if (currentLocation) return currentLocation;
+        // No location available - don't show location line
+        return undefined;
+      };
+
       const processedResult = await processAndSavePhoto(photo.path, {
         filmId: selectedFilmId,
         addDateStamp: dateStampEnabled,
         addGrain: true,
         addPolaroidFrame: polaroidEnabled,
-        location: polaroidEnabled ? currentLocation : undefined,
+        location: getLocation(),
       });
 
       await savePhoto(
@@ -267,18 +386,22 @@ export default function CameraScreen() {
 
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={toggleFlash} style={styles.topButton}>
-          <FlashIcon mode={flashMode} />
-        </TouchableOpacity>
+        <View style={styles.topBarLeft}>
+          <TouchableOpacity onPress={toggleFlash} style={styles.topButton}>
+            <FlashIcon mode={flashMode} />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity onPress={() => setShowFilmPicker(true)} style={styles.filmBadge}>
           <Text style={styles.filmBadgeLabel}>FILM</Text>
           <Text style={styles.filmBadgeName}>{selectedFilm.label}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={toggleCamera} style={styles.topButton}>
-          <FlipIcon />
-        </TouchableOpacity>
+        <View style={styles.topBarRight}>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.topButton}>
+            <SettingsIcon />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Viewfinder Frame */}
@@ -348,7 +471,11 @@ export default function CameraScreen() {
             </Animated.View>
           </TouchableOpacity>
 
-          <View style={styles.sideButton} />
+          <TouchableOpacity onPress={toggleCamera} style={styles.sideButton}>
+            <View style={styles.flipButtonOuter}>
+              <FlipIcon />
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -479,31 +606,47 @@ const iconStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  flipArrow1: {
-    position: 'absolute',
-    top: 2,
-    width: 16,
-    height: 8,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
+  flipCamera: {
+    width: 14,
+    height: 10,
+    borderWidth: 2,
     borderColor: COLORS.text,
-    borderTopRightRadius: 8,
+    borderRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  flipArrow2: {
-    position: 'absolute',
-    bottom: 2,
-    width: 16,
-    height: 8,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
+  flipLens: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.text,
-    borderBottomLeftRadius: 8,
   },
-  flipCenter: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.text,
+  flipArrowTop: {
+    position: 'absolute',
+    top: 0,
+    right: 2,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderBottomWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: COLORS.text,
+  },
+  flipArrowBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 2,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderTopWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: COLORS.text,
   },
   dateContainer: {
     width: 28,
@@ -557,6 +700,33 @@ const iconStyles = StyleSheet.create({
   polaroidBottom: {
     height: 8,
     backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  settingsContainer: {
+    width: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sliderRow: {
+    width: 18,
+    height: 2,
+    position: 'relative',
+  },
+  sliderLine: {
+    position: 'absolute',
+    width: '100%',
+    height: 2,
+    backgroundColor: COLORS.text,
+    borderRadius: 1,
+  },
+  sliderDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.text,
+    top: -2,
   },
 });
 
@@ -638,6 +808,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   topButton: {
     width: 44,
@@ -758,6 +938,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   galleryButtonOuter: {
+    width: 50,
+    height: 50,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flipButtonOuter: {
     width: 50,
     height: 50,
     backgroundColor: COLORS.surface,

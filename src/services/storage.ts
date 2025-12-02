@@ -99,26 +99,33 @@ export const savePhoto = async (
   frameNumber: number,
   rollId: string
 ): Promise<Photo> => {
-  // 1. Save to System Gallery (Camera Roll)
+  const timestamp = Date.now();
+
+  // The processed photo path (already in Documents from processor)
+  const processedPath = path.startsWith('file://') ? path : `file://${path}`;
+  const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
+
+  // 1. Save to Camera Roll (for user's photo library)
   try {
-    const cleanPath = path.startsWith('file://') ? path : `file://${path}`;
-    await CameraRoll.saveAsset(cleanPath, { type: 'photo' });
+    await CameraRoll.saveAsset(processedPath, { type: 'photo' });
     console.log('Saved to Camera Roll');
   } catch (error) {
     console.error('Failed to save to Camera Roll:', error);
   }
 
-  // 2. Save to internal app storage
-  const timestamp = Date.now();
-  const fileName = `photo_${timestamp}.jpg`;
-  const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+  // 2. Use the processed photo directly (it's already in Documents)
+  // Verify the file exists
+  const exists = await RNFS.exists(cleanPath);
+  console.log('Photo exists at path:', cleanPath, exists);
 
-  const cleanSourcePath = path.startsWith('file://') ? path.replace('file://', '') : path;
-  await RNFS.copyFile(cleanSourcePath, destPath);
+  if (!exists) {
+    console.error('Processed photo not found at:', cleanPath);
+    throw new Error('Processed photo not found');
+  }
 
   const newPhoto: Photo = {
     id: timestamp.toString(),
-    uri: `file://${destPath}`,
+    uri: processedPath,
     date: new Date().toISOString(),
     width,
     height,
@@ -134,22 +141,69 @@ export const savePhoto = async (
   const updatedPhotos = [newPhoto, ...existingPhotos];
   await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(updatedPhotos));
 
+  console.log('Photo saved to gallery:', newPhoto.uri);
+
   return newPhoto;
 };
 
 export const getPhotos = async (): Promise<Photo[]> => {
   const photosJson = await AsyncStorage.getItem(PHOTOS_KEY);
+  console.log('getPhotos - raw data:', photosJson ? 'found' : 'empty');
   if (!photosJson) return [];
 
   // Handle migration from old format
-  const photos = JSON.parse(photosJson);
-  return photos.map((p: any) => ({
+  const photos: Photo[] = JSON.parse(photosJson);
+  console.log('getPhotos - total photos in storage:', photos.length);
+
+  const mappedPhotos = photos.map((p: any) => ({
     ...p,
     filmStock: p.filmStock || 'kodak_gold_200',
     hasDateStamp: p.hasDateStamp || false,
     frameNumber: p.frameNumber || 0,
     rollId: p.rollId || '',
   }));
+
+  // Check which photos still exist on disk
+  const validPhotos: Photo[] = [];
+  const invalidIds: string[] = [];
+
+  for (const photo of mappedPhotos) {
+    const cleanPath = photo.uri.replace('file://', '');
+    console.log('Checking photo:', photo.id, 'path:', cleanPath);
+    const exists = await RNFS.exists(cleanPath);
+    console.log('Photo exists:', exists);
+    if (exists) {
+      validPhotos.push(photo);
+    } else {
+      invalidIds.push(photo.id);
+    }
+  }
+
+  console.log('getPhotos - valid:', validPhotos.length, 'invalid:', invalidIds.length);
+
+  // If any photos were removed, update storage
+  if (invalidIds.length > 0) {
+    console.log('Removing invalid photos:', invalidIds.length);
+    await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(validPhotos));
+  }
+
+  return validPhotos;
+};
+
+// Remove a photo from our metadata (used when image fails to load)
+export const removePhotoFromMetadata = async (id: string): Promise<void> => {
+  const photosJson = await AsyncStorage.getItem(PHOTOS_KEY);
+  if (!photosJson) return;
+
+  const photos: Photo[] = JSON.parse(photosJson);
+  const updatedPhotos = photos.filter(p => p.id !== id);
+  await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(updatedPhotos));
+};
+
+// Clear all photo metadata (useful for resetting after storage issues)
+export const clearAllPhotos = async (): Promise<void> => {
+  await AsyncStorage.removeItem(PHOTOS_KEY);
+  console.log('Cleared all photo metadata');
 };
 
 export const getPhotosByRoll = async (rollId: string): Promise<Photo[]> => {
@@ -186,4 +240,25 @@ export const updatePhoto = async (id: string, updates: Partial<Photo>): Promise<
   await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(photos));
 
   return photos[index];
+};
+
+// Bulk delete multiple photos
+export const deletePhotos = async (ids: string[]): Promise<void> => {
+  const photos = await getPhotos();
+  const photosToDelete = photos.filter(p => ids.includes(p.id));
+
+  // Delete files
+  for (const photo of photosToDelete) {
+    try {
+      const cleanPath = photo.uri.replace('file://', '');
+      if (await RNFS.exists(cleanPath)) {
+        await RNFS.unlink(cleanPath);
+      }
+    } catch (e) {
+      console.warn('Failed to delete file:', e);
+    }
+  }
+
+  const updatedPhotos = photos.filter(p => !ids.includes(p.id));
+  await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(updatedPhotos));
 };

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Image,
@@ -14,11 +14,12 @@ import {
   Animated,
   ActivityIndicator,
   Platform,
+  PanResponder,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, COLORS } from '../types';
-import { deletePhoto, updatePhoto } from '../services/storage';
+import { RootStackParamList, COLORS, Photo } from '../types';
+import { deletePhoto, updatePhoto, getPhotos } from '../services/storage';
 import { FILM_STOCKS, getFilmStockById, FilmStock } from '../services/filters';
 import { reprocessPhoto } from '../services/processor';
 
@@ -83,19 +84,129 @@ const CheckIcon = () => (
   </View>
 );
 
+const ChevronLeft = () => (
+  <View style={iconStyles.chevronContainer}>
+    <View style={[iconStyles.chevronArrow, { transform: [{ rotate: '135deg' }] }]} />
+  </View>
+);
+
+const ChevronRight = () => (
+  <View style={iconStyles.chevronContainer}>
+    <View style={[iconStyles.chevronArrow, { transform: [{ rotate: '-45deg' }] }]} />
+  </View>
+);
+
 export default function PhotoViewerScreen() {
   const navigation = useNavigation<PhotoViewerScreenNavigationProp>();
   const route = useRoute<PhotoViewerScreenRouteProp>();
   const { photo: initialPhoto } = route.params;
 
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [photo, setPhoto] = useState(initialPhoto);
   const [showInfo, setShowInfo] = useState(false);
   const [showEditFilm, setShowEditFilm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showActions, setShowActions] = useState(true);
 
+  const flatListRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
   const film = getFilmStockById(photo.filmStock);
+
+  // Swipe down to close gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only capture vertical swipes (down)
+        return gestureState.dy > 10 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+          const newScale = Math.max(0.85, 1 - gestureState.dy / 800);
+          scale.setValue(newScale);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 150) {
+          // Close the viewer
+          Animated.parallel([
+            Animated.timing(translateY, {
+              toValue: SCREEN_HEIGHT,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scale, {
+              toValue: 0.8,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start(() => navigation.goBack());
+        } else {
+          // Snap back
+          Animated.parallel([
+            Animated.spring(translateY, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 100,
+              friction: 10,
+            }),
+            Animated.spring(scale, {
+              toValue: 1,
+              useNativeDriver: true,
+              tension: 100,
+              friction: 10,
+            }),
+          ]).start();
+        }
+      },
+    })
+  ).current;
+
+  // Load all photos for swiping
+  useEffect(() => {
+    loadPhotos();
+  }, []);
+
+  const loadPhotos = async () => {
+    const allPhotos = await getPhotos();
+    setPhotos(allPhotos);
+    const index = allPhotos.findIndex(p => p.id === initialPhoto.id);
+    if (index >= 0) {
+      setCurrentIndex(index);
+      // Scroll to the correct position after a short delay
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({ index, animated: false });
+      }, 100);
+    }
+  };
+
+  const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      const newPhoto = viewableItems[0].item as Photo;
+      setPhoto(newPhoto);
+      setCurrentIndex(viewableItems[0].index);
+    }
+  }, []);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50
+  }).current;
+
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true });
+    }
+  };
+
+  const goToNext = () => {
+    if (currentIndex < photos.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+    }
+  };
 
   const toggleActions = () => {
     const toValue = showActions ? 0 : 1;
@@ -181,19 +292,94 @@ export default function PhotoViewerScreen() {
     });
   };
 
-  return (
-    <View style={styles.container}>
+  const renderPhotoItem = ({ item }: { item: Photo }) => (
+    <View style={styles.photoItem}>
       <TouchableOpacity
-        style={styles.photoContainer}
         activeOpacity={1}
         onPress={toggleActions}
+        style={styles.photoTouchable}
       >
         <Image
-          source={{ uri: photo.uri }}
+          source={{ uri: item.uri }}
           style={styles.photo}
           resizeMode="contain"
         />
       </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Animated.View
+        style={[
+          styles.animatedContainer,
+          {
+            transform: [
+              { translateY },
+              { scale },
+            ],
+          },
+        ]}
+        {...panResponder.panHandlers}
+      >
+        <FlatList
+          ref={flatListRef}
+          data={photos}
+          renderItem={renderPhotoItem}
+          keyExtractor={(item) => item.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(_, index) => ({
+            length: SCREEN_WIDTH,
+            offset: SCREEN_WIDTH * index,
+            index,
+          })}
+          initialNumToRender={3}
+          maxToRenderPerBatch={3}
+          windowSize={5}
+        />
+      </Animated.View>
+
+      {/* Photo Counter */}
+      {photos.length > 1 && (
+        <View style={styles.photoCounter}>
+          <Text style={styles.photoCounterText}>
+            {currentIndex + 1} / {photos.length}
+          </Text>
+        </View>
+      )}
+
+      {/* Navigation Arrows */}
+      {photos.length > 1 && showActions && (
+        <>
+          {currentIndex > 0 && (
+            <TouchableOpacity
+              style={[styles.navArrow, styles.navArrowLeft]}
+              onPress={goToPrevious}
+              activeOpacity={0.7}
+            >
+              <ChevronLeft />
+            </TouchableOpacity>
+          )}
+          {currentIndex < photos.length - 1 && (
+            <TouchableOpacity
+              style={[styles.navArrow, styles.navArrowRight]}
+              onPress={goToNext}
+              activeOpacity={0.7}
+            >
+              <ChevronRight />
+            </TouchableOpacity>
+          )}
+        </>
+      )}
+
+      {/* Swipe Down Hint - shows briefly */}
+      <View style={styles.swipeHint}>
+        <View style={styles.swipeHintBar} />
+      </View>
 
       {/* Top Bar */}
       <Animated.View style={[styles.topBar, { opacity: fadeAnim }]}>
@@ -229,7 +415,10 @@ export default function PhotoViewerScreen() {
           <View style={[styles.filmDot, {
             backgroundColor: film.isBlackAndWhite ? '#888' : film.overlayColor.replace('0.', '0.8')
           }]} />
-          <Text style={styles.filmBadgeText}>{film.label}</Text>
+          <View style={styles.filmBadgeTextContainer}>
+            <Text style={styles.filmBadgeLabel}>FILM</Text>
+            <Text style={styles.filmBadgeText}>{film.label}</Text>
+          </View>
         </View>
       </Animated.View>
 
@@ -487,6 +676,19 @@ const iconStyles = StyleSheet.create({
     right: 2,
     top: 8,
   },
+  chevronContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chevronArrow: {
+    width: 12,
+    height: 12,
+    borderLeftWidth: 2.5,
+    borderBottomWidth: 2.5,
+    borderColor: COLORS.white,
+  },
 });
 
 const styles = StyleSheet.create({
@@ -494,14 +696,70 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.black,
   },
-  photoContainer: {
+  animatedContainer: {
     flex: 1,
+    backgroundColor: COLORS.black,
+  },
+  photoItem: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoTouchable: {
+    flex: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   photo: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
+  },
+  // Navigation Arrows
+  navArrow: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -24,
+    width: 48,
+    height: 48,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navArrowLeft: {
+    left: 12,
+  },
+  navArrowRight: {
+    right: 12,
+  },
+  // Swipe Hint
+  swipeHint: {
+    position: 'absolute',
+    top: 8,
+    alignSelf: 'center',
+  },
+  swipeHintBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 2,
+  },
+  photoCounter: {
+    position: 'absolute',
+    top: 60,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  photoCounterText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
 
   // Top Bar
@@ -564,6 +822,16 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     marginRight: 8,
+  },
+  filmBadgeTextContainer: {
+    flexDirection: 'column',
+  },
+  filmBadgeLabel: {
+    color: COLORS.textDim,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 1,
   },
   filmBadgeText: {
     color: COLORS.text,

@@ -34,6 +34,7 @@ export type RootStackParamList = {
   Gallery: undefined;
   PhotoViewer: { photo: Photo };
   FilmPicker: undefined;
+  Settings: undefined;
 };
 
 // Theme colors

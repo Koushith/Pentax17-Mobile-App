@@ -8,11 +8,14 @@ import {
   Dimensions,
   Text,
   RefreshControl,
+  Alert,
+  Share,
+  Animated,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, Photo, COLORS } from '../types';
-import { getPhotos } from '../services/storage';
+import { getPhotos, deletePhotos, removePhotoFromMetadata } from '../services/storage';
 import { getFilmStockById } from '../services/filters';
 
 const { width } = Dimensions.get('window');
@@ -58,11 +61,52 @@ const CameraIcon = () => (
   </View>
 );
 
+const CheckIcon = ({ checked }: { checked: boolean }) => (
+  <View style={[iconStyles.checkCircle, checked && iconStyles.checkCircleActive]}>
+    {checked && (
+      <>
+        <View style={iconStyles.checkShort} />
+        <View style={iconStyles.checkLong} />
+      </>
+    )}
+  </View>
+);
+
+const TrashIcon = () => (
+  <View style={iconStyles.trashContainer}>
+    <View style={iconStyles.trashLid} />
+    <View style={iconStyles.trashBody} />
+  </View>
+);
+
+const ShareIcon = () => (
+  <View style={iconStyles.shareContainer}>
+    <View style={iconStyles.shareBox} />
+    <View style={iconStyles.shareArrow} />
+  </View>
+);
+
+const CloseIcon = () => (
+  <View style={iconStyles.closeContainer}>
+    <View style={iconStyles.closeLine1} />
+    <View style={iconStyles.closeLine2} />
+  </View>
+);
+
+const SelectAllIcon = () => (
+  <View style={iconStyles.selectAllContainer}>
+    <View style={iconStyles.selectAllBox} />
+    <View style={iconStyles.selectAllCheck} />
+  </View>
+);
+
 export default function GalleryScreen() {
   const navigation = useNavigation<GalleryScreenNavigationProp>();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     useCallback(() => {
@@ -83,28 +127,131 @@ export default function GalleryScreen() {
     setIsRefreshing(false);
   };
 
+  const toggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === photos.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(photos.map(p => p.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+
+    Alert.alert(
+      'Delete Photos',
+      `Delete ${selectedIds.size} photo${selectedIds.size > 1 ? 's' : ''}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deletePhotos(Array.from(selectedIds));
+            setSelectedIds(new Set());
+            setIsSelectMode(false);
+            loadPhotos();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleShareSelected = async () => {
+    if (selectedIds.size === 0) return;
+
+    const selectedPhotos = photos.filter(p => selectedIds.has(p.id));
+    const urls = selectedPhotos.map(p => p.uri);
+
+    try {
+      await Share.share({
+        message: `${selectedIds.size} photos from Cam`,
+        url: urls[0], // iOS only supports one URL
+      });
+    } catch (error) {
+      console.error('Share error:', error);
+    }
+  };
+
+  const handleItemPress = (item: Photo) => {
+    if (isSelectMode) {
+      toggleSelect(item.id);
+    } else {
+      navigation.navigate('PhotoViewer', { photo: item });
+    }
+  };
+
+  const handleItemLongPress = (item: Photo) => {
+    if (!isSelectMode) {
+      setIsSelectMode(true);
+      setSelectedIds(new Set([item.id]));
+    }
+  };
+
+  const handleImageError = async (photoId: string) => {
+    // Photo failed to load (likely deleted from Camera Roll)
+    // Remove it from our metadata and refresh
+    await removePhotoFromMetadata(photoId);
+    setPhotos(prev => prev.filter(p => p.id !== photoId));
+  };
+
   const renderItem = ({ item, index }: { item: Photo; index: number }) => {
     const film = getFilmStockById(item.filmStock);
+    const isSelected = selectedIds.has(item.id);
 
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate('PhotoViewer', { photo: item })}
-        style={styles.itemContainer}
+        onPress={() => handleItemPress(item)}
+        onLongPress={() => handleItemLongPress(item)}
+        delayLongPress={300}
+        style={[styles.itemContainer, isSelected && styles.itemSelected]}
         activeOpacity={0.8}
       >
-        <Image source={{ uri: item.uri }} style={styles.thumbnail} />
+        <Image
+          source={{ uri: item.uri }}
+          style={styles.thumbnail}
+          onError={() => handleImageError(item.id)}
+        />
 
-        <View style={styles.filmIndicator}>
-          <View style={[styles.filmDot, {
-            backgroundColor: film.isBlackAndWhite ? '#888' : film.overlayColor.replace('0.', '0.8')
-          }]} />
-        </View>
+        {/* Selection overlay */}
+        {isSelectMode && (
+          <View style={styles.selectionOverlay}>
+            <CheckIcon checked={isSelected} />
+          </View>
+        )}
 
-        <View style={styles.frameNumberBadge}>
-          <Text style={styles.frameNumberText}>
-            {String(item.frameNumber || index + 1).padStart(2, '0')}
-          </Text>
-        </View>
+        {/* Film indicator - hide in select mode */}
+        {!isSelectMode && (
+          <View style={styles.filmIndicator}>
+            <View style={[styles.filmDot, {
+              backgroundColor: film.isBlackAndWhite ? '#888' : film.overlayColor.replace('0.', '0.8')
+            }]} />
+          </View>
+        )}
+
+        {/* Frame number - hide in select mode */}
+        {!isSelectMode && (
+          <View style={styles.frameNumberBadge}>
+            <Text style={styles.frameNumberText}>
+              {String(item.frameNumber || index + 1).padStart(2, '0')}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -144,18 +291,44 @@ export default function GalleryScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <BackIcon />
-        </TouchableOpacity>
+      {/* Header - Normal or Selection Mode */}
+      {isSelectMode ? (
+        <View style={styles.selectionHeader}>
+          <TouchableOpacity onPress={toggleSelectMode} style={styles.backButton}>
+            <CloseIcon />
+          </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Gallery</Text>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>
+              {selectedIds.size} selected
+            </Text>
+          </View>
+
+          <TouchableOpacity onPress={selectAll} style={styles.selectAllButton}>
+            <Text style={styles.selectAllText}>
+              {selectedIds.size === photos.length ? 'None' : 'All'}
+            </Text>
+          </TouchableOpacity>
         </View>
+      ) : (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <BackIcon />
+          </TouchableOpacity>
 
-        <View style={styles.headerRight} />
-      </View>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Gallery</Text>
+          </View>
+
+          {photos.length > 0 ? (
+            <TouchableOpacity onPress={toggleSelectMode} style={styles.selectButton}>
+              <Text style={styles.selectButtonText}>Select</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.headerRight} />
+          )}
+        </View>
+      )}
 
       {/* Content */}
       {!isLoading && photos.length === 0 ? (
@@ -166,8 +339,11 @@ export default function GalleryScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           numColumns={COLUMN_COUNT}
-          contentContainerStyle={styles.gridContent}
-          ListHeaderComponent={photos.length > 0 ? renderHeader : null}
+          contentContainerStyle={[
+            styles.gridContent,
+            isSelectMode && styles.gridContentWithActionBar
+          ]}
+          ListHeaderComponent={photos.length > 0 && !isSelectMode ? renderHeader : null}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -179,11 +355,167 @@ export default function GalleryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Bottom Action Bar - Select Mode */}
+      {isSelectMode && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity
+            onPress={handleShareSelected}
+            style={[styles.actionButton, selectedIds.size === 0 && styles.actionButtonDisabled]}
+            disabled={selectedIds.size === 0}
+          >
+            <ShareIcon />
+            <Text style={[styles.actionButtonText, selectedIds.size === 0 && styles.actionButtonTextDisabled]}>
+              Share
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleDeleteSelected}
+            style={[styles.actionButton, styles.deleteButton, selectedIds.size === 0 && styles.actionButtonDisabled]}
+            disabled={selectedIds.size === 0}
+          >
+            <TrashIcon />
+            <Text style={[styles.actionButtonText, styles.deleteButtonText, selectedIds.size === 0 && styles.actionButtonTextDisabled]}>
+              Delete
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
 
 const iconStyles = StyleSheet.create({
+  // Check circle for selection
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORS.white,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkCircleActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  checkShort: {
+    position: 'absolute',
+    width: 6,
+    height: 2,
+    backgroundColor: COLORS.black,
+    transform: [{ rotate: '45deg' }],
+    left: 4,
+    top: 11,
+  },
+  checkLong: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    backgroundColor: COLORS.black,
+    transform: [{ rotate: '-45deg' }],
+    right: 3,
+    top: 9,
+  },
+  // Trash icon
+  trashContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trashLid: {
+    width: 18,
+    height: 3,
+    backgroundColor: COLORS.text,
+    borderRadius: 1,
+    marginBottom: 1,
+  },
+  trashBody: {
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderColor: COLORS.text,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+  // Share icon
+  shareContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareBox: {
+    width: 14,
+    height: 12,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderColor: COLORS.text,
+    position: 'absolute',
+    bottom: 2,
+  },
+  shareArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: COLORS.text,
+    position: 'absolute',
+    top: 2,
+  },
+  // Close icon
+  closeContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeLine1: {
+    position: 'absolute',
+    width: 16,
+    height: 2,
+    backgroundColor: COLORS.text,
+    transform: [{ rotate: '45deg' }],
+  },
+  closeLine2: {
+    position: 'absolute',
+    width: 16,
+    height: 2,
+    backgroundColor: COLORS.text,
+    transform: [{ rotate: '-45deg' }],
+  },
+  // Select all icon
+  selectAllContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectAllBox: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderColor: COLORS.text,
+    borderRadius: 3,
+  },
+  selectAllCheck: {
+    width: 8,
+    height: 4,
+    borderLeftWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: COLORS.text,
+    transform: [{ rotate: '-45deg' }],
+    position: 'absolute',
+    top: 8,
+  },
   backContainer: {
     width: 24,
     height: 24,
@@ -304,6 +636,36 @@ const styles = StyleSheet.create({
   headerRight: {
     width: 44,
   },
+  selectButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  selectButtonText: {
+    color: COLORS.accent,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Selection header
+  selectionHeader: {
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surfaceLight,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surface,
+  },
+  selectAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  selectAllText: {
+    color: COLORS.accent,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 
   // Stats Header
   headerInfo: {
@@ -380,6 +742,61 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  // Selection styles
+  gridContentWithActionBar: {
+    paddingBottom: 100,
+  },
+  itemSelected: {
+    borderWidth: 3,
+    borderColor: COLORS.accent,
+    borderRadius: 6,
+  },
+  selectionOverlay: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+  },
+  // Action Bar
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingBottom: 40,
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceLight,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceLight,
+  },
+  actionButtonDisabled: {
+    opacity: 0.4,
+  },
+  deleteButton: {
+    backgroundColor: 'rgba(255,59,48,0.15)',
+  },
+  actionButtonText: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: '#FF3B30',
+  },
+  actionButtonTextDisabled: {
+    color: COLORS.textDim,
   },
 
   // Empty State
