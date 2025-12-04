@@ -479,15 +479,6 @@ export default function CameraScreen() {
         </View>
       </View>
 
-      {/* Processing Overlay */}
-      {isProcessing && (
-        <View style={styles.processingOverlay}>
-          <View style={styles.processingCard}>
-            <ActivityIndicator color={COLORS.accent} size="large" />
-            <Text style={styles.processingText}>Developing...</Text>
-          </View>
-        </View>
-      )}
 
       {/* Film Picker Modal */}
       <Modal visible={showFilmPicker} animationType="slide" transparent>
@@ -991,26 +982,6 @@ const styles = StyleSheet.create({
   },
   shutterInnerDisabled: {
     backgroundColor: COLORS.textDim,
-  },
-
-  // Processing
-  processingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  processingCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-  },
-  processingText: {
-    color: COLORS.text,
-    fontSize: 15,
-    fontWeight: '600',
-    marginTop: 16,
   },
 
   // Modal

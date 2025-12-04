@@ -4,6 +4,10 @@
     {
       "path": "src/assets/fonts/DepartureMono-Regular.otf",
       "sha1": "f490da428af67742e6eb15783588145f5aed0c82"
+    },
+    {
+      "path": "src/assets/luts/kodak-250D.cube",
+      "sha1": "76643a57fc72272316a847df306615459c27a872"
     }
   ]
 }

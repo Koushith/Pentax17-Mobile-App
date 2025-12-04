@@ -156,14 +156,12 @@ export const processAndSavePhoto = async (
     }
     canvas.drawRect({ x: 0, y: 0, width: outputWidth, height: outputHeight }, bgPaint);
 
-    // 5. Get film stock settings
+    // 5. Get film stock and create paint with color matrix filter
     const selectedFilm = getFilmStockById(options.filmId);
-
-    // 6. Create paint with color matrix filter
     const paint = Skia.Paint();
     paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
 
-    // 7. Draw cropped image with filter
+    // 6. Draw cropped image with filter
     // Create source and destination rectangles for drawing
     const srcRect = { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
     const dstRect = { x: imageOffsetX, y: imageOffsetY, width: cropWidth, height: cropHeight };
@@ -318,6 +316,7 @@ export const reprocessPhoto = async (
 
     if (!image) throw new Error("Could not decode image");
 
+    const selectedFilm = getFilmStockById(newFilmId);
     const width = image.width();
     const height = image.height();
 
@@ -326,7 +325,6 @@ export const reprocessPhoto = async (
 
     const canvas = surface.getCanvas();
 
-    const selectedFilm = getFilmStockById(newFilmId);
     const paint = Skia.Paint();
     paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
 

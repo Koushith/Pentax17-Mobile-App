@@ -72,12 +72,32 @@ cd ios && pod install && cd ..
 ### Running
 
 ```bash
-# iOS
+# iOS Simulator
 npx react-native run-ios
+
+# iOS Physical Device (connect via USB)
+RCT_NEW_ARCH_ENABLED=0 npx react-native run-ios --device
 
 # Android
 npx react-native run-android
 ```
+
+### Fresh Install on Physical Device
+
+If you need to do a clean rebuild (e.g., after pulling changes or fixing build issues):
+
+```bash
+# 1. Clean iOS build artifacts
+cd ios && rm -rf Pods Podfile.lock build && cd ..
+
+# 2. Reinstall pods with old architecture
+RCT_NEW_ARCH_ENABLED=0 pod install --project-directory=ios
+
+# 3. Build and install on device
+RCT_NEW_ARCH_ENABLED=0 npx react-native run-ios --device
+```
+
+**Note:** The app currently requires `RCT_NEW_ARCH_ENABLED=0` for physical device builds due to react-native-screens compatibility.
 
 ## Architecture
 

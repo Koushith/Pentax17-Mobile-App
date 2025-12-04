@@ -84,18 +84,6 @@ const CheckIcon = () => (
   </View>
 );
 
-const ChevronLeft = () => (
-  <View style={iconStyles.chevronContainer}>
-    <View style={[iconStyles.chevronArrow, { transform: [{ rotate: '135deg' }] }]} />
-  </View>
-);
-
-const ChevronRight = () => (
-  <View style={iconStyles.chevronContainer}>
-    <View style={[iconStyles.chevronArrow, { transform: [{ rotate: '-45deg' }] }]} />
-  </View>
-);
-
 export default function PhotoViewerScreen() {
   const navigation = useNavigation<PhotoViewerScreenNavigationProp>();
   const route = useRoute<PhotoViewerScreenRouteProp>();
@@ -195,18 +183,6 @@ export default function PhotoViewerScreen() {
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50
   }).current;
-
-  const goToPrevious = () => {
-    if (currentIndex > 0) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true });
-    }
-  };
-
-  const goToNext = () => {
-    if (currentIndex < photos.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
-    }
-  };
 
   const toggleActions = () => {
     const toValue = showActions ? 0 : 1;
@@ -352,29 +328,6 @@ export default function PhotoViewerScreen() {
         </View>
       )}
 
-      {/* Navigation Arrows */}
-      {photos.length > 1 && showActions && (
-        <>
-          {currentIndex > 0 && (
-            <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowLeft]}
-              onPress={goToPrevious}
-              activeOpacity={0.7}
-            >
-              <ChevronLeft />
-            </TouchableOpacity>
-          )}
-          {currentIndex < photos.length - 1 && (
-            <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowRight]}
-              onPress={goToNext}
-              activeOpacity={0.7}
-            >
-              <ChevronRight />
-            </TouchableOpacity>
-          )}
-        </>
-      )}
 
       {/* Swipe Down Hint - shows briefly */}
       <View style={styles.swipeHint}>
@@ -676,19 +629,6 @@ const iconStyles = StyleSheet.create({
     right: 2,
     top: 8,
   },
-  chevronContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chevronArrow: {
-    width: 12,
-    height: 12,
-    borderLeftWidth: 2.5,
-    borderBottomWidth: 2.5,
-    borderColor: COLORS.white,
-  },
 });
 
 const styles = StyleSheet.create({
@@ -715,24 +655,6 @@ const styles = StyleSheet.create({
   photo: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
-  },
-  // Navigation Arrows
-  navArrow: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -24,
-    width: 48,
-    height: 48,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navArrowLeft: {
-    left: 12,
-  },
-  navArrowRight: {
-    right: 12,
   },
   // Swipe Hint
   swipeHint: {
