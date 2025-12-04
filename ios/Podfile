@@ -8,8 +8,8 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, '16.0'
 prepare_react_native_project!
 
-# Disable VisionCamera frame processors to avoid worklets-core conflicts
-$VCEnableFrameProcessors = false
+# Enable VisionCamera frame processors for real-time Skia filters
+# Requires react-native-worklets-core and react-native-reanimated
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil

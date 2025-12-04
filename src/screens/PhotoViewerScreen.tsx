@@ -21,7 +21,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, COLORS, Photo } from '../types';
 import { deletePhoto, updatePhoto, getPhotos } from '../services/storage';
 import { FILM_STOCKS, getFilmStockById, FilmStock } from '../services/filters';
-import { reprocessPhoto } from '../services/processor';
+import { reprocessPhotoWithLUT } from '../services/processor';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -83,6 +83,69 @@ const CheckIcon = () => (
     <View style={iconStyles.checkLong} />
   </View>
 );
+
+// Separate component for photo item with zoom
+interface PhotoItemProps {
+  item: Photo;
+  onToggleActions: () => void;
+}
+
+const PhotoItemComponent = ({ item, onToggleActions }: PhotoItemProps) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const lastTap = useRef<number>(0);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected - reset zoom
+      scrollViewRef.current?.scrollResponderZoomTo({
+        x: 0,
+        y: 0,
+        width: SCREEN_WIDTH,
+        height: SCREEN_HEIGHT,
+        animated: true,
+      });
+    } else {
+      // Single tap - toggle actions after delay
+      setTimeout(() => {
+        if (Date.now() - lastTap.current >= DOUBLE_TAP_DELAY) {
+          onToggleActions();
+        }
+      }, DOUBLE_TAP_DELAY);
+    }
+    lastTap.current = now;
+  };
+
+  return (
+    <View style={styles.photoItem}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        maximumZoomScale={4}
+        minimumZoomScale={1}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        centerContent={true}
+        bouncesZoom={true}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleDoubleTap}
+          style={styles.photoTouchable}
+        >
+          <Image
+            source={{ uri: item.uri }}
+            style={styles.photo}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+};
 
 export default function PhotoViewerScreen() {
   const navigation = useNavigation<PhotoViewerScreenNavigationProp>();
@@ -184,15 +247,17 @@ export default function PhotoViewerScreen() {
     itemVisiblePercentThreshold: 50
   }).current;
 
-  const toggleActions = () => {
-    const toValue = showActions ? 0 : 1;
-    Animated.timing(fadeAnim, {
-      toValue,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-    setShowActions(!showActions);
-  };
+  const toggleActions = useCallback(() => {
+    setShowActions(prev => {
+      const toValue = prev ? 0 : 1;
+      Animated.timing(fadeAnim, {
+        toValue,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      return !prev;
+    });
+  }, [fadeAnim]);
 
   const handleDelete = () => {
     Alert.alert(
@@ -234,13 +299,15 @@ export default function PhotoViewerScreen() {
     setShowEditFilm(false);
 
     try {
-      const newUri = await reprocessPhoto(photo.uri, newFilm.id);
+      const newUri = await reprocessPhotoWithLUT(photo.uri, newFilm.id);
       const updatedPhoto = await updatePhoto(photo.id, {
         uri: newUri,
         filmStock: newFilm.id,
       });
       if (updatedPhoto) {
         setPhoto(updatedPhoto);
+        // Also update in the photos array
+        setPhotos(prev => prev.map(p => p.id === photo.id ? updatedPhoto : p));
       }
     } catch (error) {
       console.error('Reprocess error:', error);
@@ -268,21 +335,9 @@ export default function PhotoViewerScreen() {
     });
   };
 
-  const renderPhotoItem = ({ item }: { item: Photo }) => (
-    <View style={styles.photoItem}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={toggleActions}
-        style={styles.photoTouchable}
-      >
-        <Image
-          source={{ uri: item.uri }}
-          style={styles.photo}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-    </View>
-  );
+  const renderPhotoItem = useCallback(({ item }: { item: Photo }) => (
+    <PhotoItemComponent item={item} onToggleActions={toggleActions} />
+  ), [toggleActions]);
 
   return (
     <View style={styles.container}>
@@ -362,16 +417,6 @@ export default function PhotoViewerScreen() {
             <ShareIcon />
             <Text style={styles.actionLabel}>Share</Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.filmBadge}>
-          <View style={[styles.filmDot, {
-            backgroundColor: film.isBlackAndWhite ? '#888' : film.overlayColor.replace('0.', '0.8')
-          }]} />
-          <View style={styles.filmBadgeTextContainer}>
-            <Text style={styles.filmBadgeLabel}>FILM</Text>
-            <Text style={styles.filmBadgeText}>{film.label}</Text>
-          </View>
         </View>
       </Animated.View>
 
@@ -646,9 +691,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  photoTouchable: {
+  scrollView: {
     flex: 1,
-    width: '100%',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  scrollViewContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoTouchable: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -710,55 +765,24 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingBottom: 40,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingTop: 16,
+    paddingHorizontal: 40,
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
+    justifyContent: 'space-between',
   },
   actionButton: {
     alignItems: 'center',
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   actionLabel: {
     color: COLORS.text,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 8,
-  },
-  filmBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignSelf: 'center',
-  },
-  filmDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  filmBadgeTextContainer: {
-    flexDirection: 'column',
-  },
-  filmBadgeLabel: {
-    color: COLORS.textDim,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 1,
-  },
-  filmBadgeText: {
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: '600',
   },
 
   // Processing

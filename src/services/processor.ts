@@ -326,12 +326,13 @@ export const processAndSavePhoto = async (
   }
 };
 
-// Re-process an existing photo with different settings
-export const reprocessPhoto = async (
+// Re-process an existing photo with different LUT filter
+export const reprocessPhotoWithLUT = async (
   photoUri: string,
   newFilmId: string
 ): Promise<string> => {
   try {
+    console.log('Reprocessing photo with LUT:', newFilmId);
     const cleanPath = photoUri.startsWith('file://') ? photoUri.replace('file://', '') : photoUri;
     const fileContent = await RNFS.readFile(cleanPath, 'base64');
     const inputBytes = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0));
@@ -344,17 +345,41 @@ export const reprocessPhoto = async (
     const width = image.width();
     const height = image.height();
 
+    // Create surface and draw original image
     const surface = Skia.Surface.MakeOffscreen(width, height);
     if (!surface) throw new Error("Could not create surface");
 
     const canvas = surface.getCanvas();
 
+    // Draw original image with color matrix filter
     const paint = Skia.Paint();
     paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
-
     canvas.drawImage(image, 0, 0, paint);
 
-    // Re-add vignette
+    // Apply LUT if available
+    let finalImage = surface.makeImageSnapshot();
+
+    if (selectedFilm.lutFile) {
+      console.log('Loading LUT for reprocess:', selectedFilm.lutFile);
+      const lut = await loadLUT(selectedFilm.lutFile);
+      if (lut) {
+        const lutImage = applyLUTToSurface(surface, lut);
+        if (lutImage) {
+          finalImage = lutImage;
+          console.log('LUT applied successfully during reprocess');
+        }
+      }
+    }
+
+    // Create final surface with vignette
+    const finalSurface = Skia.Surface.MakeOffscreen(width, height);
+    if (!finalSurface) throw new Error("Could not create final surface");
+
+    const finalCanvas = finalSurface.getCanvas();
+    const drawPaint = Skia.Paint();
+    finalCanvas.drawImage(finalImage, 0, 0, drawPaint);
+
+    // Add vignette
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = Math.max(width, height) * 0.7;
@@ -369,9 +394,24 @@ export const reprocessPhoto = async (
 
     const vignettePaint = Skia.Paint();
     vignettePaint.setShader(vignetteShader);
-    canvas.drawRect({ x: 0, y: 0, width, height }, vignettePaint);
+    finalCanvas.drawRect({ x: 0, y: 0, width, height }, vignettePaint);
 
-    const snapshot = surface.makeImageSnapshot();
+    // Add film grain
+    if (selectedFilm.grain > 0) {
+      const grainPaint = Skia.Paint();
+      const numDots = Math.floor(width * height * 0.0003);
+
+      for (let i = 0; i < numDots; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const brightness = Math.random() > 0.5 ? 255 : 0;
+        const alpha = selectedFilm.grain * 0.1;
+        grainPaint.setColor(Skia.Color(`rgba(${brightness},${brightness},${brightness},${alpha})`));
+        finalCanvas.drawCircle(x, y, 0.8, grainPaint);
+      }
+    }
+
+    const snapshot = finalSurface.makeImageSnapshot();
     const outputBytes = snapshot.encodeToBytes(ImageFormat.JPEG, 95);
 
     if (!outputBytes) throw new Error("Could not encode image");
@@ -387,6 +427,7 @@ export const reprocessPhoto = async (
     const newPath = `${RNFS.DocumentDirectoryPath}/reprocessed_${timestamp}.jpg`;
     await RNFS.writeFile(newPath, base64Output, 'base64');
 
+    console.log('Photo reprocessed successfully:', newPath);
     return `file://${newPath}`;
   } catch (e) {
     console.error("Failed to reprocess photo:", e);

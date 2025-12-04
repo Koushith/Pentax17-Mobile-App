@@ -8,22 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* CamAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* CamAppTests.m */; };
+		030F6780B3E44C6FB9757AB2 /* moonrise-kingdom.cube in Resources */ = {isa = PBXBuildFile; fileRef = E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */; };
+		0658BFD8BD994834A42A6B90 /* kodak-250D.json in Resources */ = {isa = PBXBuildFile; fileRef = 622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */; };
+		09CFC42780B44FD2825CD8F0 /* clean-raw.cube in Resources */ = {isa = PBXBuildFile; fileRef = 1B3461BE58404D9389C7DB9F /* clean-raw.cube */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		1570D20CA5C143D99344DF2C /* moonrise-kingdom.json in Resources */ = {isa = PBXBuildFile; fileRef = 6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */; };
 		186B034D63EDB0BECCDB3AD0 /* libPods-CamApp-CamAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B525EB176D6CD13407A5041 /* libPods-CamApp-CamAppTests.a */; };
 		3B0B29697D206907A2A5B49E /* libPods-CamApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C3271F2E5B345B4BE28ED6B /* libPods-CamApp.a */; };
+		6241697F725845298ADCBD96 /* clean-raw.json in Resources */ = {isa = PBXBuildFile; fileRef = C705837F1D174808B5EBAD93 /* clean-raw.json */; };
+		7BAB91F1918345A89283F98D /* vintage-overlay.cube in Resources */ = {isa = PBXBuildFile; fileRef = A5089323ADE447109F68D160 /* vintage-overlay.cube */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9527BF3B93894A528C0B5871 /* DepartureMono-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = F7EB2A6981D640248AE3E4E2 /* DepartureMono-Regular.otf */; };
 		BB9DDA4436B1251418DFE3C6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		D62A21513A104E6F8D2091E4 /* kodak-250D.cube in Resources */ = {isa = PBXBuildFile; fileRef = 8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */; };
-		09CFC42780B44FD2825CD8F0 /* clean-raw.cube in Resources */ = {isa = PBXBuildFile; fileRef = 1B3461BE58404D9389C7DB9F /* clean-raw.cube */; };
-		6241697F725845298ADCBD96 /* clean-raw.json in Resources */ = {isa = PBXBuildFile; fileRef = C705837F1D174808B5EBAD93 /* clean-raw.json */; };
-		0658BFD8BD994834A42A6B90 /* kodak-250D.json in Resources */ = {isa = PBXBuildFile; fileRef = 622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */; };
-		030F6780B3E44C6FB9757AB2 /* moonrise-kingdom.cube in Resources */ = {isa = PBXBuildFile; fileRef = E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */; };
-		1570D20CA5C143D99344DF2C /* moonrise-kingdom.json in Resources */ = {isa = PBXBuildFile; fileRef = 6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */; };
-		7BAB91F1918345A89283F98D /* vintage-overlay.cube in Resources */ = {isa = PBXBuildFile; fileRef = A5089323ADE447109F68D160 /* vintage-overlay.cube */; };
 		D32304EC21094191908FF671 /* vintage-overlay.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */; };
+		D62A21513A104E6F8D2091E4 /* kodak-250D.cube in Resources */ = {isa = PBXBuildFile; fileRef = 8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,23 +47,23 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CamApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = CamApp/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = CamApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1B3461BE58404D9389C7DB9F /* clean-raw.cube */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "clean-raw.cube"; path = "../src/assets/luts/clean-raw.cube"; sourceTree = "<group>"; };
+		2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "vintage-overlay.json"; path = "../src/assets/luts/vintage-overlay.json"; sourceTree = "<group>"; };
 		4754EFCC847E23081FA8B429 /* Pods-CamApp-CamAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.release.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		5C3271F2E5B345B4BE28ED6B /* libPods-CamApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "kodak-250D.json"; path = "../src/assets/luts/kodak-250D.json"; sourceTree = "<group>"; };
 		6B525EB176D6CD13407A5041 /* libPods-CamApp-CamAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp-CamAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "moonrise-kingdom.json"; path = "../src/assets/luts/moonrise-kingdom.json"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CamApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "kodak-250D.cube"; path = "../src/assets/luts/kodak-250D.cube"; sourceTree = "<group>"; };
+		A5089323ADE447109F68D160 /* vintage-overlay.cube */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "vintage-overlay.cube"; path = "../src/assets/luts/vintage-overlay.cube"; sourceTree = "<group>"; };
+		C705837F1D174808B5EBAD93 /* clean-raw.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "clean-raw.json"; path = "../src/assets/luts/clean-raw.json"; sourceTree = "<group>"; };
 		E6B92F8EB44B98769133C4C7 /* Pods-CamApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.release.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.release.xcconfig"; sourceTree = "<group>"; };
+		E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "moonrise-kingdom.cube"; path = "../src/assets/luts/moonrise-kingdom.cube"; sourceTree = "<group>"; };
 		EC44F1538AB6C974A909BE62 /* Pods-CamApp-CamAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.debug.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F10BA13C4D24B478C76AB163 /* Pods-CamApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.debug.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.debug.xcconfig"; sourceTree = "<group>"; };
 		F7EB2A6981D640248AE3E4E2 /* DepartureMono-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "DepartureMono-Regular.otf"; path = "../src/assets/fonts/DepartureMono-Regular.otf"; sourceTree = "<group>"; };
-		1B3461BE58404D9389C7DB9F /* clean-raw.cube */ = {isa = PBXFileReference; name = "clean-raw.cube"; path = "../src/assets/luts/clean-raw.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		C705837F1D174808B5EBAD93 /* clean-raw.json */ = {isa = PBXFileReference; name = "clean-raw.json"; path = "../src/assets/luts/clean-raw.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */ = {isa = PBXFileReference; name = "kodak-250D.json"; path = "../src/assets/luts/kodak-250D.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */ = {isa = PBXFileReference; name = "moonrise-kingdom.cube"; path = "../src/assets/luts/moonrise-kingdom.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */ = {isa = PBXFileReference; name = "moonrise-kingdom.json"; path = "../src/assets/luts/moonrise-kingdom.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		A5089323ADE447109F68D160 /* vintage-overlay.cube */ = {isa = PBXFileReference; name = "vintage-overlay.cube"; path = "../src/assets/luts/vintage-overlay.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */ = {isa = PBXFileReference; name = "vintage-overlay.json"; path = "../src/assets/luts/vintage-overlay.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
