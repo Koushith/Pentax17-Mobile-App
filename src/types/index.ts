@@ -30,6 +30,9 @@ export interface AppSettings {
   soundEnabled: boolean;
   currentRollId: string;
   currentFrameNumber: number;
+  highQuality: boolean;
+  showGrid: boolean;
+  saveToLibrary: boolean;
 }
 
 export type FlashMode = 'off' | 'on' | 'auto';

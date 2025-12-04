@@ -29,8 +29,6 @@ import { RootStackParamList, FlashMode, CameraPosition, COLORS } from '../types'
 import { savePhoto, getSettings, saveSettings } from '../services/storage';
 import { processAndSavePhoto } from '../services/processor';
 import { FILM_STOCKS, FilmStock, getFilmStockById } from '../services/filters';
-// Note: Full LUT processing happens during photo capture via processor.ts
-// Real-time preview uses color overlay approximation
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -118,6 +116,8 @@ export default function CameraScreen() {
   const [polaroidEnabled, setPolaroidEnabled] = useState(true);
   const [currentLocation, setCurrentLocation] = useState<string | undefined>(undefined);
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [showFilmPicker, setShowFilmPicker] = useState(false);
   const shutterScale = useRef(new Animated.Value(1)).current;
@@ -134,6 +134,8 @@ export default function CameraScreen() {
   const loadSettings = async () => {
     const settings = await getSettings();
     setDateStampEnabled(settings.dateStampEnabled);
+    setShowGrid(settings.showGrid);
+    setSoundEnabled(settings.soundEnabled);
   };
 
   useEffect(() => {
@@ -269,7 +271,7 @@ export default function CameraScreen() {
     try {
       const photo = await camera.current.takePhoto({
         flash: flashMode,
-        enableShutterSound: true,
+        enableShutterSound: soundEnabled,
       });
 
       setIsProcessing(true);
@@ -382,11 +384,20 @@ export default function CameraScreen() {
         device={currentDevice}
         isActive={true}
         photo={true}
+        video={true}
       />
 
-      {/* Color overlay for filter preview approximation */}
-      {selectedFilm.overlayColor && (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: selectedFilm.overlayColor }]} pointerEvents="none" />
+      {/* Color overlay for filter preview */}
+      {selectedFilm.id !== 'clean_raw' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: selectedFilm.overlayColor,
+              pointerEvents: 'none'
+            }
+          ]}
+        />
       )}
 
       {/* Top Bar */}
@@ -419,10 +430,14 @@ export default function CameraScreen() {
           <View style={styles.focusPoint}>
             <View style={styles.focusPointInner} />
           </View>
-          <View style={styles.gridLineH1} />
-          <View style={styles.gridLineH2} />
-          <View style={styles.gridLineV1} />
-          <View style={styles.gridLineV2} />
+          {showGrid && (
+            <>
+              <View style={styles.gridLineH1} />
+              <View style={styles.gridLineH2} />
+              <View style={styles.gridLineV1} />
+              <View style={styles.gridLineV2} />
+            </>
+          )}
         </View>
       </View>
 

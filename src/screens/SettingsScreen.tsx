@@ -56,6 +56,9 @@ export default function SettingsScreen() {
   const loadSettings = async () => {
     const settings = await getSettings();
     setSoundEnabled(settings.soundEnabled);
+    setHighQuality(settings.highQuality);
+    setShowGrid(settings.showGrid);
+    setSaveToLibrary(settings.saveToLibrary);
   };
 
   const checkLocationPermission = async () => {
@@ -125,6 +128,21 @@ export default function SettingsScreen() {
     await saveSettings({ soundEnabled: value });
   };
 
+  const handleHighQualityToggle = async (value: boolean) => {
+    setHighQuality(value);
+    await saveSettings({ highQuality: value });
+  };
+
+  const handleShowGridToggle = async (value: boolean) => {
+    setShowGrid(value);
+    await saveSettings({ showGrid: value });
+  };
+
+  const handleSaveToLibraryToggle = async (value: boolean) => {
+    setSaveToLibrary(value);
+    await saveSettings({ saveToLibrary: value });
+  };
+
   const handleClearCache = () => {
     Alert.alert(
       'Clear App Data',
@@ -184,7 +202,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={highQuality}
-              onValueChange={setHighQuality}
+              onValueChange={handleHighQualityToggle}
               trackColor={{ false: COLORS.surfaceLight, true: COLORS.accentDim }}
               thumbColor={highQuality ? COLORS.accent : COLORS.textDim}
               ios_backgroundColor={COLORS.surfaceLight}
@@ -200,7 +218,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={showGrid}
-              onValueChange={setShowGrid}
+              onValueChange={handleShowGridToggle}
               trackColor={{ false: COLORS.surfaceLight, true: COLORS.accentDim }}
               thumbColor={showGrid ? COLORS.accent : COLORS.textDim}
               ios_backgroundColor={COLORS.surfaceLight}
@@ -249,7 +267,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={saveToLibrary}
-              onValueChange={setSaveToLibrary}
+              onValueChange={handleSaveToLibraryToggle}
               trackColor={{ false: COLORS.surfaceLight, true: COLORS.accentDim }}
               thumbColor={saveToLibrary ? COLORS.accent : COLORS.textDim}
               ios_backgroundColor={COLORS.surfaceLight}

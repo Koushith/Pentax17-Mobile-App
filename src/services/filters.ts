@@ -38,7 +38,7 @@ export const KODAK_250D: FilmStock = {
     0.0, 0.0, 1.0, 0.0, 0,
     0.0, 0.0, 0.0, 1.0, 0
   ],
-  overlayColor: 'rgba(255, 180, 100, 0.12)', // Warm golden cinema tint
+  overlayColor: 'rgba(137, 133, 186, 0.25)', // Blue/purple tint from LUT analysis
   grain: 0.04,
   isBlackAndWhite: false,
   description: 'Cinema daylight film',
@@ -56,7 +56,7 @@ export const MOONRISE_KINGDOM: FilmStock = {
     0.0, 0.0, 1.0, 0.0, 0,
     0.0, 0.0, 0.0, 1.0, 0
   ],
-  overlayColor: 'rgba(255, 200, 120, 0.15)', // Warm yellow Wes Anderson tint
+  overlayColor: 'rgba(140, 100, 50, 0.30)', // Warm brown/sepia from LUT (removes blue)
   grain: 0.03,
   isBlackAndWhite: false,
   description: 'Wes Anderson warm vintage',
@@ -74,7 +74,7 @@ export const VINTAGE_OVERLAY: FilmStock = {
     0.0, 0.0, 1.0, 0.0, 0,
     0.0, 0.0, 0.0, 1.0, 0
   ],
-  overlayColor: 'rgba(200, 180, 140, 0.18)', // Faded sepia vintage tint
+  overlayColor: 'rgba(160, 130, 110, 0.25)', // Warm brownish from LUT analysis
   grain: 0.05,
   isBlackAndWhite: false,
   description: 'Classic faded vintage',
@@ -92,7 +92,7 @@ export const CLEAN_RAW: FilmStock = {
     0.0, 0.0, 1.0, 0.0, 0,
     0.0, 0.0, 0.0, 1.0, 0
   ],
-  overlayColor: 'rgba(220, 240, 255, 0.08)', // Very subtle cool/clean tint
+  overlayColor: 'transparent', // No overlay for clean raw
   grain: 0.02,
   isBlackAndWhite: false,
   description: 'Natural clean look',

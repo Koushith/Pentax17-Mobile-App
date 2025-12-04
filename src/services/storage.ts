@@ -13,6 +13,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   soundEnabled: true,
   currentRollId: '',
   currentFrameNumber: 0,
+  highQuality: true,
+  showGrid: true,
+  saveToLibrary: true,
 };
 
 // Settings Management
