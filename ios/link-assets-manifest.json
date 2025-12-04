@@ -6,8 +6,36 @@
       "sha1": "f490da428af67742e6eb15783588145f5aed0c82"
     },
     {
+      "path": "src/assets/luts/clean-raw.cube",
+      "sha1": "570fccae2c49a2d04149109d13e16a1686097924"
+    },
+    {
+      "path": "src/assets/luts/clean-raw.json",
+      "sha1": "740fdcd7ced3e6109f3ef106c9c3aaa0197d9d7b"
+    },
+    {
       "path": "src/assets/luts/kodak-250D.cube",
       "sha1": "76643a57fc72272316a847df306615459c27a872"
+    },
+    {
+      "path": "src/assets/luts/kodak-250D.json",
+      "sha1": "fec010f752bb3b1b19a60448c4deccceda37b7d1"
+    },
+    {
+      "path": "src/assets/luts/moonrise-kingdom.cube",
+      "sha1": "7ee12d09e4d5f57dcd398c03b1486ab560efed1e"
+    },
+    {
+      "path": "src/assets/luts/moonrise-kingdom.json",
+      "sha1": "a640b5e6d6637c6f136e37b54cc4330873b65983"
+    },
+    {
+      "path": "src/assets/luts/vintage-overlay.cube",
+      "sha1": "20980480cb0e0367af42d94ff1970b4d465888a3"
+    },
+    {
+      "path": "src/assets/luts/vintage-overlay.json",
+      "sha1": "a63082c1d493af95a7814c416daa0f9ee838befc"
     }
   ]
 }

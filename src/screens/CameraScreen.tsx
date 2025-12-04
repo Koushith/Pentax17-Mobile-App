@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,7 +15,8 @@ import {
   PermissionsAndroid,
   Platform,
 } from 'react-native';
-import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { Camera, useCameraDevice, useCameraPermission, useMicrophonePermission, useCameraFormat } from 'react-native-vision-camera';
+import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // Safe import of geolocation - will gracefully handle if not available
@@ -26,9 +27,12 @@ try {
   console.log('Geolocation not available');
 }
 import { RootStackParamList, FlashMode, CameraPosition, COLORS } from '../types';
-import { savePhoto, getSettings, saveSettings } from '../services/storage';
+import { savePhoto, saveVideo, getSettings, saveSettings } from '../services/storage';
 import { processAndSavePhoto } from '../services/processor';
 import { FILM_STOCKS, FilmStock, getFilmStockById } from '../services/filters';
+import { processVideoWithFilter } from '../services/videoProcessor';
+// Note: Full LUT processing happens during photo capture via processor.ts
+// Video mode: Uses FFmpeg post-processing to apply LUT filters
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -104,16 +108,21 @@ export default function CameraScreen() {
   const device = useCameraDevice('back');
   const frontDevice = useCameraDevice('front');
   const { hasPermission, requestPermission } = useCameraPermission();
+  const { hasPermission: hasMicPermission, requestPermission: requestMicPermission } = useMicrophonePermission();
   const camera = useRef<Camera>(null);
 
   const [cameraPosition, setCameraPosition] = useState<CameraPosition>('back');
   const [flashMode, setFlashMode] = useState<FlashMode>('off');
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingMode, setRecordingMode] = useState(false); // Toggle between photo/video mode
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingTimer = useRef<NodeJS.Timeout | null>(null);
 
   const [selectedFilmId, setSelectedFilmId] = useState(FILM_STOCKS[0].id);
   const [dateStampEnabled, setDateStampEnabled] = useState(false);
-  const [polaroidEnabled, setPolaroidEnabled] = useState(false);
+  const [polaroidEnabled, setPolaroidEnabled] = useState(true); // Polaroid frames enabled by default
   const [currentLocation, setCurrentLocation] = useState<string | undefined>(undefined);
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
@@ -139,6 +148,18 @@ export default function CameraScreen() {
       requestPermission();
     }
   }, [hasPermission]);
+
+  useEffect(() => {
+    const setupMicPermission = async () => {
+      console.log('Microphone permission status:', hasMicPermission);
+      if (!hasMicPermission) {
+        const result = await requestMicPermission();
+        console.log('Microphone permission request result:', result);
+      }
+    };
+    setupMicPermission();
+  }, [hasMicPermission]);
+
 
   // Request location permission at startup
   useEffect(() => {
@@ -241,6 +262,117 @@ export default function CameraScreen() {
       setCurrentLocation(undefined);
     }
   };
+
+  // Format recording duration as MM:SS
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Video recording functions
+  const startRecording = async () => {
+    if (!camera.current || isRecording) return;
+
+    setIsRecording(true);
+    setRecordingDuration(0);
+    animateShutter();
+    Vibration.vibrate(10);
+
+    // Start duration timer
+    recordingTimer.current = setInterval(() => {
+      setRecordingDuration(prev => prev + 1);
+    }, 1000);
+
+    try {
+      console.log('Starting recording with audio enabled:', hasMicPermission);
+      await camera.current.startRecording({
+        flash: flashMode === 'on' ? 'on' : 'off',
+        videoCodec: 'h265',
+        fileType: 'mov',
+        onRecordingFinished: async (video) => {
+          console.log('Video recording finished!');
+          console.log('Video path:', video.path);
+          console.log('Video duration:', video.duration);
+
+          try {
+            setIsProcessing(true);
+
+            // Process video with selected filter
+            console.log('Processing video with filter:', selectedFilmId);
+            const processResult = await processVideoWithFilter(video.path, selectedFilmId);
+
+            const finalVideoPath = processResult.success && processResult.outputPath
+              ? processResult.outputPath
+              : video.path;
+
+            if (!processResult.success) {
+              console.log('Video filter processing failed, using original:', processResult.error);
+            }
+
+            // Save to CameraRoll
+            const videoPath = finalVideoPath.startsWith('file://') ? finalVideoPath : `file://${finalVideoPath}`;
+            await CameraRoll.save(videoPath, { type: 'video', album: 'CamApp' });
+
+            // Save to app's gallery
+            await saveVideo(finalVideoPath, video.duration || 0);
+
+            console.log('Video saved successfully');
+            Vibration.vibrate([0, 50, 50, 50]);
+          } catch (saveError: any) {
+            console.error('Failed to save video:', saveError);
+            Alert.alert('Save Error', `Could not save video: ${saveError.message || saveError}`);
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        onRecordingError: (error) => {
+          console.error('Recording error:', error);
+          Alert.alert('Error', 'Failed to record video');
+        },
+      });
+    } catch (e) {
+      console.error('Failed to start recording:', e);
+      setIsRecording(false);
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
+      }
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!camera.current || !isRecording) return;
+
+    // Stop timer
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current);
+      recordingTimer.current = null;
+    }
+
+    try {
+      await camera.current.stopRecording();
+    } catch (e) {
+      console.error('Failed to stop recording:', e);
+    } finally {
+      setIsRecording(false);
+      setRecordingDuration(0);
+    }
+  };
+
+  const toggleRecordingMode = () => {
+    if (isRecording) return; // Don't toggle while recording
+    setRecordingMode(prev => !prev);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+    };
+  }, []);
 
   const animateShutter = () => {
     Animated.sequence([
@@ -380,25 +512,38 @@ export default function CameraScreen() {
         device={currentDevice}
         isActive={true}
         photo={true}
+        video={true}
+        audio={hasMicPermission ?? false}
       />
 
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: selectedFilm.overlayColor }]} pointerEvents="none" />
+      {/* Color overlay for filter preview approximation */}
+      {selectedFilm.overlayColor && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: selectedFilm.overlayColor }]} pointerEvents="none" />
+      )}
 
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
-          <TouchableOpacity onPress={toggleFlash} style={styles.topButton}>
+          <TouchableOpacity onPress={toggleFlash} style={styles.topButton} disabled={isRecording}>
             <FlashIcon mode={flashMode} />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => setShowFilmPicker(true)} style={styles.filmBadge}>
-          <Text style={styles.filmBadgeLabel}>FILM</Text>
-          <Text style={styles.filmBadgeName}>{selectedFilm.label}</Text>
-        </TouchableOpacity>
+        {/* Show recording timer or film badge */}
+        {isRecording ? (
+          <View style={styles.recordingBadge}>
+            <View style={styles.recordingDotLarge} />
+            <Text style={styles.recordingTimerText}>{formatDuration(recordingDuration)}</Text>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={() => setShowFilmPicker(true)} style={styles.filmBadge}>
+            <Text style={styles.filmBadgeLabel}>FILM</Text>
+            <Text style={styles.filmBadgeName}>{selectedFilm.label}</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.topBarRight}>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.topButton}>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.topButton} disabled={isRecording}>
             <SettingsIcon />
           </TouchableOpacity>
         </View>
@@ -425,22 +570,42 @@ export default function CameraScreen() {
       <View style={styles.controlsContainer}>
         <View style={styles.controlsBackground} />
 
-        {/* Secondary Controls Row */}
-        <View style={styles.secondaryControls}>
-          <TouchableOpacity onPress={toggleDateStamp} style={styles.secondaryButton}>
-            <DateIcon active={dateStampEnabled} />
-            <Text style={[styles.secondaryLabel, dateStampEnabled && styles.secondaryLabelActive]}>
-              DATE
-            </Text>
+        {/* Mode Selector */}
+        <View style={styles.modeSelector}>
+          <TouchableOpacity
+            onPress={() => setRecordingMode(false)}
+            style={[styles.modeOption, !recordingMode && styles.modeOptionActive]}
+            disabled={isRecording}
+          >
+            <Text style={[styles.modeText, !recordingMode && styles.modeTextActive]}>PHOTO</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity onPress={togglePolaroid} style={styles.secondaryButton}>
-            <PolaroidIcon active={polaroidEnabled} />
-            <Text style={[styles.secondaryLabel, polaroidEnabled && styles.secondaryLabelActive]}>
-              FRAME
-            </Text>
+          <TouchableOpacity
+            onPress={() => setRecordingMode(true)}
+            style={[styles.modeOption, recordingMode && styles.modeOptionActive]}
+            disabled={isRecording}
+          >
+            <Text style={[styles.modeText, recordingMode && styles.modeTextActive]}>VIDEO</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Photo Options (only visible in photo mode) */}
+        {!recordingMode && (
+          <View style={styles.photoOptions}>
+            <TouchableOpacity onPress={toggleDateStamp} style={styles.optionButton}>
+              <DateIcon active={dateStampEnabled} />
+              <Text style={[styles.optionLabel, dateStampEnabled && styles.optionLabelActive]}>
+                DATE
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={togglePolaroid} style={styles.optionButton}>
+              <PolaroidIcon active={polaroidEnabled} />
+              <Text style={[styles.optionLabel, polaroidEnabled && styles.optionLabelActive]}>
+                FRAME
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Main Controls */}
         <View style={styles.controlsContent}>
@@ -451,19 +616,24 @@ export default function CameraScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={onTakePhoto}
+            onPress={recordingMode ? (isRecording ? stopRecording : startRecording) : onTakePhoto}
             disabled={isTakingPhoto || isProcessing}
             activeOpacity={0.8}
+            onLongPress={recordingMode ? undefined : startRecording}
           >
             <Animated.View style={[styles.shutterButton, { transform: [{ scale: shutterScale }] }]}>
-              <View style={styles.shutterOuter}>
+              <View style={[styles.shutterOuter, isRecording && styles.shutterOuterRecording]}>
                 <View style={styles.shutterMiddle}>
                   <View style={[
-                    styles.shutterInner,
-                    (isTakingPhoto || isProcessing) && styles.shutterInnerDisabled
+                    recordingMode ? styles.shutterInnerVideo : styles.shutterInner,
+                    (isTakingPhoto || isProcessing) && styles.shutterInnerDisabled,
+                    isRecording && styles.shutterInnerRecording
                   ]}>
                     {isProcessing && (
                       <ActivityIndicator color={COLORS.surface} size="small" />
+                    )}
+                    {isRecording && (
+                      <View style={styles.recordingStop} />
                     )}
                   </View>
                 </View>
@@ -471,12 +641,13 @@ export default function CameraScreen() {
             </Animated.View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={toggleCamera} style={styles.sideButton}>
-            <View style={styles.flipButtonOuter}>
+          <TouchableOpacity onPress={toggleCamera} style={styles.sideButton} disabled={isRecording}>
+            <View style={[styles.flipButtonOuter, isRecording && styles.buttonDisabled]}>
               <FlipIcon />
             </View>
           </TouchableOpacity>
         </View>
+
       </View>
 
 
@@ -897,23 +1068,48 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.85)',
   },
-  secondaryControls: {
+  modeSelector: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    padding: 3,
+    marginBottom: 12,
+  },
+  modeOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 17,
+  },
+  modeOptionActive: {
+    backgroundColor: COLORS.accent,
+  },
+  modeText: {
+    color: COLORS.textDim,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  modeTextActive: {
+    color: COLORS.black,
+  },
+  photoOptions: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 40,
-    marginBottom: 20,
+    gap: 50,
+    marginBottom: 16,
   },
-  secondaryButton: {
+  optionButton: {
     alignItems: 'center',
   },
-  secondaryLabel: {
+  optionLabel: {
     color: COLORS.textDim,
     fontSize: 9,
     fontWeight: '700',
     marginTop: 6,
     letterSpacing: 0.5,
   },
-  secondaryLabelActive: {
+  optionLabelActive: {
     color: COLORS.accent,
   },
   controlsContent: {
@@ -983,7 +1179,76 @@ const styles = StyleSheet.create({
   shutterInnerDisabled: {
     backgroundColor: COLORS.textDim,
   },
+  shutterInnerVideo: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shutterInnerRecording: {
+    backgroundColor: COLORS.danger,
+  },
+  shutterOuterRecording: {
+    backgroundColor: COLORS.danger,
+  },
+  recordingStop: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: COLORS.white,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
 
+  // Recording indicator
+  recordingIndicator: {
+    position: 'absolute',
+    top: -40,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.danger,
+    marginRight: 6,
+  },
+  recordingText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  recordingBadge: {
+    backgroundColor: COLORS.danger,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recordingDotLarge: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.white,
+  },
+  recordingTimerText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
   // Modal
   modalOverlay: {
     flex: 1,

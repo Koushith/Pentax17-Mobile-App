@@ -1,6 +1,7 @@
 import { ImageFormat, Skia, TileMode } from "@shopify/react-native-skia";
 import RNFS from 'react-native-fs';
 import { getFilmStockById } from './filters';
+import { loadLUT, applyLUTToSurface } from './lutProcessor';
 
 // Pentax 17 half-frame aspect ratio: 17x24mm = 2:3 vertical
 const HALF_FRAME_ASPECT_RATIO = 2 / 3;
@@ -137,17 +138,48 @@ export const processAndSavePhoto = async (
 
     console.log('Output dimensions:', outputWidth, 'x', outputHeight);
 
-    // 3. Create offscreen surface using MakeOffscreen for GPU rendering
+    // 3. Get film stock
+    const selectedFilm = getFilmStockById(options.filmId);
+    const paint = Skia.Paint();
+    paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
+
+    // 4. Create a surface for the photo only (without frame) to apply LUT
+    const photoSurface = Skia.Surface.MakeOffscreen(cropWidth, cropHeight);
+    if (!photoSurface) {
+      throw new Error("Could not create photo surface");
+    }
+
+    const photoCanvas = photoSurface.getCanvas();
+
+    // Draw cropped image with color matrix filter onto photo surface
+    const srcRect = { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
+    const photoDstRect = { x: 0, y: 0, width: cropWidth, height: cropHeight };
+    photoCanvas.drawImageRect(image, srcRect, photoDstRect, paint);
+
+    // 5. Apply LUT to photo-only surface (not including frame)
+    let processedPhotoImage = photoSurface.makeImageSnapshot();
+
+    if (selectedFilm.lutFile) {
+      console.log('Loading LUT:', selectedFilm.lutFile);
+      const lut = await loadLUT(selectedFilm.lutFile);
+      if (lut) {
+        const lutImage = applyLUTToSurface(photoSurface, lut);
+        if (lutImage) {
+          processedPhotoImage = lutImage;
+          console.log('LUT applied successfully to photo area only');
+        }
+      }
+    }
+
+    // 6. Create final output surface with Polaroid frame
     const surface = Skia.Surface.MakeOffscreen(outputWidth, outputHeight);
     if (!surface) {
-      console.error('Failed to create offscreen surface, trying Make');
-      // Fallback - just return original
-      throw new Error("Could not create surface");
+      throw new Error("Could not create output surface");
     }
 
     const canvas = surface.getCanvas();
 
-    // 4. Fill background (white for Polaroid, black otherwise)
+    // 7. Fill background (white for Polaroid, black otherwise)
     const bgPaint = Skia.Paint();
     if (options.addPolaroidFrame) {
       bgPaint.setColor(Skia.Color('#F5F5F0')); // Slightly warm white like real Polaroid
@@ -156,19 +188,11 @@ export const processAndSavePhoto = async (
     }
     canvas.drawRect({ x: 0, y: 0, width: outputWidth, height: outputHeight }, bgPaint);
 
-    // 5. Get film stock and create paint with color matrix filter
-    const selectedFilm = getFilmStockById(options.filmId);
-    const paint = Skia.Paint();
-    paint.setColorFilter(Skia.ColorFilter.MakeMatrix(selectedFilm.matrix));
+    // 8. Draw processed photo onto final surface at the correct position
+    const drawPaint = Skia.Paint();
+    canvas.drawImage(processedPhotoImage, imageOffsetX, imageOffsetY, drawPaint);
 
-    // 6. Draw cropped image with filter
-    // Create source and destination rectangles for drawing
-    const srcRect = { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
-    const dstRect = { x: imageOffsetX, y: imageOffsetY, width: cropWidth, height: cropHeight };
-
-    canvas.drawImageRect(image, srcRect, dstRect, paint);
-
-    // 8. Add vignette effect
+    // 9. Add vignette effect
     const centerX = imageOffsetX + cropWidth / 2;
     const centerY = imageOffsetY + cropHeight / 2;
     const radius = Math.max(cropWidth, cropHeight) * 0.7;
@@ -185,7 +209,7 @@ export const processAndSavePhoto = async (
     vignettePaint.setShader(vignetteShader);
     canvas.drawRect({ x: imageOffsetX, y: imageOffsetY, width: cropWidth, height: cropHeight }, vignettePaint);
 
-    // 9. Add film grain if enabled
+    // 10. Add film grain if enabled
     if (options.addGrain && selectedFilm.grain > 0) {
       const grainPaint = Skia.Paint();
       const numDots = Math.floor(cropWidth * cropHeight * 0.0003);
@@ -200,7 +224,7 @@ export const processAndSavePhoto = async (
       }
     }
 
-    // 10. Add date stamp if enabled (on image, not Polaroid)
+    // 11. Add date stamp if enabled (on image, not Polaroid)
     if (options.addDateStamp && !options.addPolaroidFrame) {
       const dateText = formatDateStamp();
       const fontSize = Math.floor(cropHeight * 0.035);
@@ -221,7 +245,7 @@ export const processAndSavePhoto = async (
       canvas.drawText(dateText, x, y, datePaint, dateFont);
     }
 
-    // 11. Add Polaroid text if enabled
+    // 12. Add Polaroid text if enabled
     if (options.addPolaroidFrame) {
       console.log('Adding Polaroid text, location:', options.location);
       const borderSize = Math.floor(cropWidth * POLAROID_BORDER);
@@ -266,7 +290,7 @@ export const processAndSavePhoto = async (
       canvas.drawText(filmText, filmX, filmY, filmPaint, filmFont);
     }
 
-    // 12. Snapshot and Save
+    // 13. Snapshot and Save
     const snapshot = surface.makeImageSnapshot();
     const outputBytes = snapshot.encodeToBytes(ImageFormat.JPEG, 95);
 

@@ -8,15 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* CamAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* CamAppTests.m */; };
-		0C80B921A6F3F58F76C31292 /* libPods-CamApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-CamApp.a */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		7699B88040F8A987B510C191 /* libPods-CamApp-CamAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-CamApp-CamAppTests.a */; };
+		186B034D63EDB0BECCDB3AD0 /* libPods-CamApp-CamAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B525EB176D6CD13407A5041 /* libPods-CamApp-CamAppTests.a */; };
+		3B0B29697D206907A2A5B49E /* libPods-CamApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C3271F2E5B345B4BE28ED6B /* libPods-CamApp.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9527BF3B93894A528C0B5871 /* DepartureMono-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = F7EB2A6981D640248AE3E4E2 /* DepartureMono-Regular.otf */; };
 		BB9DDA4436B1251418DFE3C6 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		D62A21513A104E6F8D2091E4 /* kodak-250D.cube in Resources */ = {isa = PBXBuildFile; fileRef = 8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */; };
+		09CFC42780B44FD2825CD8F0 /* clean-raw.cube in Resources */ = {isa = PBXBuildFile; fileRef = 1B3461BE58404D9389C7DB9F /* clean-raw.cube */; };
+		6241697F725845298ADCBD96 /* clean-raw.json in Resources */ = {isa = PBXBuildFile; fileRef = C705837F1D174808B5EBAD93 /* clean-raw.json */; };
+		0658BFD8BD994834A42A6B90 /* kodak-250D.json in Resources */ = {isa = PBXBuildFile; fileRef = 622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */; };
+		030F6780B3E44C6FB9757AB2 /* moonrise-kingdom.cube in Resources */ = {isa = PBXBuildFile; fileRef = E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */; };
+		1570D20CA5C143D99344DF2C /* moonrise-kingdom.json in Resources */ = {isa = PBXBuildFile; fileRef = 6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */; };
+		7BAB91F1918345A89283F98D /* vintage-overlay.cube in Resources */ = {isa = PBXBuildFile; fileRef = A5089323ADE447109F68D160 /* vintage-overlay.cube */; };
+		D32304EC21094191908FF671 /* vintage-overlay.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,16 +47,23 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CamApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = CamApp/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = CamApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		19F6CBCC0A4E27FBF8BF4A61 /* libPods-CamApp-CamAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp-CamAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		3B4392A12AC88292D35C810B /* Pods-CamApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.debug.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.debug.xcconfig"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-CamApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.release.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.release.xcconfig"; sourceTree = "<group>"; };
-		5B7EB9410499542E8C5724F5 /* Pods-CamApp-CamAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.debug.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.debug.xcconfig"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-CamApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4754EFCC847E23081FA8B429 /* Pods-CamApp-CamAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.release.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.release.xcconfig"; sourceTree = "<group>"; };
+		5C3271F2E5B345B4BE28ED6B /* libPods-CamApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B525EB176D6CD13407A5041 /* libPods-CamApp-CamAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CamApp-CamAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CamApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		89C6BE57DB24E9ADA2F236DE /* Pods-CamApp-CamAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.release.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "kodak-250D.cube"; path = "../src/assets/luts/kodak-250D.cube"; sourceTree = "<group>"; };
+		E6B92F8EB44B98769133C4C7 /* Pods-CamApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.release.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.release.xcconfig"; sourceTree = "<group>"; };
+		EC44F1538AB6C974A909BE62 /* Pods-CamApp-CamAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp-CamAppTests.debug.xcconfig"; path = "Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F10BA13C4D24B478C76AB163 /* Pods-CamApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CamApp.debug.xcconfig"; path = "Target Support Files/Pods-CamApp/Pods-CamApp.debug.xcconfig"; sourceTree = "<group>"; };
 		F7EB2A6981D640248AE3E4E2 /* DepartureMono-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "DepartureMono-Regular.otf"; path = "../src/assets/fonts/DepartureMono-Regular.otf"; sourceTree = "<group>"; };
+		1B3461BE58404D9389C7DB9F /* clean-raw.cube */ = {isa = PBXFileReference; name = "clean-raw.cube"; path = "../src/assets/luts/clean-raw.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		C705837F1D174808B5EBAD93 /* clean-raw.json */ = {isa = PBXFileReference; name = "clean-raw.json"; path = "../src/assets/luts/clean-raw.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */ = {isa = PBXFileReference; name = "kodak-250D.json"; path = "../src/assets/luts/kodak-250D.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */ = {isa = PBXFileReference; name = "moonrise-kingdom.cube"; path = "../src/assets/luts/moonrise-kingdom.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */ = {isa = PBXFileReference; name = "moonrise-kingdom.json"; path = "../src/assets/luts/moonrise-kingdom.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A5089323ADE447109F68D160 /* vintage-overlay.cube */ = {isa = PBXFileReference; name = "vintage-overlay.cube"; path = "../src/assets/luts/vintage-overlay.cube"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */ = {isa = PBXFileReference; name = "vintage-overlay.json"; path = "../src/assets/luts/vintage-overlay.json"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7699B88040F8A987B510C191 /* libPods-CamApp-CamAppTests.a in Frameworks */,
+				186B034D63EDB0BECCDB3AD0 /* libPods-CamApp-CamAppTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,7 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-CamApp.a in Frameworks */,
+				3B0B29697D206907A2A5B49E /* libPods-CamApp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,8 +121,8 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-CamApp.a */,
-				19F6CBCC0A4E27FBF8BF4A61 /* libPods-CamApp-CamAppTests.a */,
+				5C3271F2E5B345B4BE28ED6B /* libPods-CamApp.a */,
+				6B525EB176D6CD13407A5041 /* libPods-CamApp-CamAppTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -118,6 +132,13 @@
 			children = (
 				F7EB2A6981D640248AE3E4E2 /* DepartureMono-Regular.otf */,
 				8F47D42D06514C7DA285ABF3 /* kodak-250D.cube */,
+				1B3461BE58404D9389C7DB9F /* clean-raw.cube */,
+				C705837F1D174808B5EBAD93 /* clean-raw.json */,
+				622214EA8BDD49BE9EE0FA0C /* kodak-250D.json */,
+				E85518D6C48540AFA0EA691C /* moonrise-kingdom.cube */,
+				6F345C4840334B679F9A52E9 /* moonrise-kingdom.json */,
+				A5089323ADE447109F68D160 /* vintage-overlay.cube */,
+				2A60EB9FCF7B4274B0DF4419 /* vintage-overlay.json */,
 			);
 			name = Resources;
 			path = "";
@@ -158,10 +179,10 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-CamApp.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-CamApp.release.xcconfig */,
-				5B7EB9410499542E8C5724F5 /* Pods-CamApp-CamAppTests.debug.xcconfig */,
-				89C6BE57DB24E9ADA2F236DE /* Pods-CamApp-CamAppTests.release.xcconfig */,
+				F10BA13C4D24B478C76AB163 /* Pods-CamApp.debug.xcconfig */,
+				E6B92F8EB44B98769133C4C7 /* Pods-CamApp.release.xcconfig */,
+				EC44F1538AB6C974A909BE62 /* Pods-CamApp-CamAppTests.debug.xcconfig */,
+				4754EFCC847E23081FA8B429 /* Pods-CamApp-CamAppTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -173,12 +194,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "CamAppTests" */;
 			buildPhases = (
-				A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */,
+				33EAD5060BD18317958F2090 /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
 				00E356EB1AD99517003FC87E /* Frameworks */,
 				00E356EC1AD99517003FC87E /* Resources */,
-				C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */,
-				F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */,
+				8FE05C1F35FD2D08ED7C6CFA /* [CP] Embed Pods Frameworks */,
+				8CB12069256362459D66D495 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -194,13 +215,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CamApp" */;
 			buildPhases = (
-				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				63B1FC2FA3455F8A8E77B16E /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
-				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				95FCAAA61658972FFFFA9E44 /* [CP] Embed Pods Frameworks */,
+				769752E0681CF3ADE5B44981 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -264,6 +285,13 @@
 				BB9DDA4436B1251418DFE3C6 /* PrivacyInfo.xcprivacy in Resources */,
 				9527BF3B93894A528C0B5871 /* DepartureMono-Regular.otf in Resources */,
 				D62A21513A104E6F8D2091E4 /* kodak-250D.cube in Resources */,
+				09CFC42780B44FD2825CD8F0 /* clean-raw.cube in Resources */,
+				6241697F725845298ADCBD96 /* clean-raw.json in Resources */,
+				0658BFD8BD994834A42A6B90 /* kodak-250D.json in Resources */,
+				030F6780B3E44C6FB9757AB2 /* moonrise-kingdom.cube in Resources */,
+				1570D20CA5C143D99344DF2C /* moonrise-kingdom.json in Resources */,
+				7BAB91F1918345A89283F98D /* vintage-overlay.cube in Resources */,
+				D32304EC21094191908FF671 /* vintage-overlay.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,24 +314,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
+		33EAD5060BD18317958F2090 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -325,7 +336,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
+		63B1FC2FA3455F8A8E77B16E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -347,24 +358,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
+		769752E0681CF3ADE5B44981 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -381,7 +375,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */ = {
+		8CB12069256362459D66D495 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -396,6 +390,40 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8FE05C1F35FD2D08ED7C6CFA /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp-CamAppTests/Pods-CamApp-CamAppTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		95FCAAA61658972FFFFA9E44 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CamApp/Pods-CamApp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -431,7 +459,7 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-CamApp-CamAppTests.debug.xcconfig */;
+			baseConfigurationReference = EC44F1538AB6C974A909BE62 /* Pods-CamApp-CamAppTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				DEVELOPMENT_TEAM = 6AHKNLQL75;
@@ -459,7 +487,7 @@
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-CamApp-CamAppTests.release.xcconfig */;
+			baseConfigurationReference = 4754EFCC847E23081FA8B429 /* Pods-CamApp-CamAppTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
@@ -484,7 +512,7 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-CamApp.debug.xcconfig */;
+			baseConfigurationReference = F10BA13C4D24B478C76AB163 /* Pods-CamApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -513,7 +541,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-CamApp.release.xcconfig */;
+			baseConfigurationReference = E6B92F8EB44B98769133C4C7 /* Pods-CamApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

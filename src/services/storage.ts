@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CameraRoll } from "@react-native-camera-roll/camera-roll";
 import RNFS from 'react-native-fs';
-import { Photo, FilmRoll, AppSettings } from '../types';
+import { Photo, Video, FilmRoll, AppSettings } from '../types';
 
 const PHOTOS_KEY = 'photos_metadata';
+const VIDEOS_KEY = 'videos_metadata';
 const ROLLS_KEY = 'film_rolls';
 const SETTINGS_KEY = 'app_settings';
 
@@ -261,4 +262,85 @@ export const deletePhotos = async (ids: string[]): Promise<void> => {
 
   const updatedPhotos = photos.filter(p => !ids.includes(p.id));
   await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(updatedPhotos));
+};
+
+// Video Management
+export const saveVideo = async (
+  path: string,
+  duration: number
+): Promise<Video> => {
+  const timestamp = Date.now();
+  const videoPath = path.startsWith('file://') ? path : `file://${path}`;
+
+  // Copy video to app's documents directory for persistence
+  const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
+  const newPath = `${RNFS.DocumentDirectoryPath}/video_${timestamp}.mov`;
+
+  try {
+    await RNFS.copyFile(cleanPath, newPath);
+    console.log('Video copied to:', newPath);
+  } catch (e) {
+    console.error('Failed to copy video:', e);
+    throw e;
+  }
+
+  const newVideo: Video = {
+    id: timestamp.toString(),
+    uri: `file://${newPath}`,
+    date: new Date().toISOString(),
+    duration,
+  };
+
+  const existingVideosJson = await AsyncStorage.getItem(VIDEOS_KEY);
+  const existingVideos: Video[] = existingVideosJson ? JSON.parse(existingVideosJson) : [];
+
+  const updatedVideos = [newVideo, ...existingVideos];
+  await AsyncStorage.setItem(VIDEOS_KEY, JSON.stringify(updatedVideos));
+
+  console.log('Video saved to gallery:', newVideo.uri);
+  return newVideo;
+};
+
+export const getVideos = async (): Promise<Video[]> => {
+  const videosJson = await AsyncStorage.getItem(VIDEOS_KEY);
+  if (!videosJson) return [];
+
+  const videos: Video[] = JSON.parse(videosJson);
+
+  // Check which videos still exist on disk
+  const validVideos: Video[] = [];
+
+  for (const video of videos) {
+    const cleanPath = video.uri.replace('file://', '');
+    const exists = await RNFS.exists(cleanPath);
+    if (exists) {
+      validVideos.push(video);
+    }
+  }
+
+  // Update storage if any were removed
+  if (validVideos.length !== videos.length) {
+    await AsyncStorage.setItem(VIDEOS_KEY, JSON.stringify(validVideos));
+  }
+
+  return validVideos;
+};
+
+export const deleteVideo = async (id: string): Promise<void> => {
+  const videos = await getVideos();
+  const videoToDelete = videos.find(v => v.id === id);
+
+  if (videoToDelete) {
+    try {
+      const cleanPath = videoToDelete.uri.replace('file://', '');
+      if (await RNFS.exists(cleanPath)) {
+        await RNFS.unlink(cleanPath);
+      }
+    } catch (e) {
+      console.warn('Failed to delete video file:', e);
+    }
+  }
+
+  const updatedVideos = videos.filter(v => v.id !== id);
+  await AsyncStorage.setItem(VIDEOS_KEY, JSON.stringify(updatedVideos));
 };

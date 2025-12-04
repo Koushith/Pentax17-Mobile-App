@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CameraScreen from './src/screens/CameraScreen';
 import GalleryScreen from './src/screens/GalleryScreen';
 import PhotoViewerScreen from './src/screens/PhotoViewerScreen';
+import VideoViewerScreen from './src/screens/VideoViewerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { RootStackParamList, COLORS } from './src/types';
 
@@ -54,6 +55,11 @@ function App(): React.JSX.Element {
           <Stack.Screen
             name="PhotoViewer"
             component={PhotoViewerScreen}
+            options={{ animation: 'fade' }}
+          />
+          <Stack.Screen
+            name="VideoViewer"
+            component={VideoViewerScreen}
             options={{ animation: 'fade' }}
           />
           <Stack.Screen

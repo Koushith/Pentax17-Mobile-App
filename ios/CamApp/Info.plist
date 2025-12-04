@@ -34,7 +34,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Allow location access to add place names to your Polaroid photos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow access to camera to take photos.</string>
+	<string>Allow access to camera to take photos and videos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow access to microphone to record video with audio.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to photo library to save photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

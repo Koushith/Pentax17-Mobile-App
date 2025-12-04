@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, Photo, COLORS } from '../types';
-import { getPhotos, deletePhotos, removePhotoFromMetadata } from '../services/storage';
+import { RootStackParamList, Photo, Video, COLORS } from '../types';
+import { getPhotos, getVideos, deletePhotos, deleteVideo, removePhotoFromMetadata } from '../services/storage';
 import { getFilmStockById } from '../services/filters';
 
 const { width } = Dimensions.get('window');
@@ -100,30 +100,51 @@ const SelectAllIcon = () => (
   </View>
 );
 
+// Combined media item type
+type MediaItem = (Photo & { type: 'photo' }) | (Video & { type: 'video' });
+
+// Video play icon
+const PlayIcon = () => (
+  <View style={iconStyles.playContainer}>
+    <View style={iconStyles.playTriangle} />
+  </View>
+);
+
 export default function GalleryScreen() {
   const navigation = useNavigation<GalleryScreenNavigationProp>();
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Combine photos and videos into a single list sorted by date
+  const mediaItems: MediaItem[] = [
+    ...photos.map(p => ({ ...p, type: 'photo' as const })),
+    ...videos.map(v => ({ ...v, type: 'video' as const })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   useFocusEffect(
     useCallback(() => {
-      loadPhotos();
+      loadMedia();
     }, [])
   );
 
-  const loadPhotos = async () => {
+  const loadMedia = async () => {
     setIsLoading(true);
-    const loadedPhotos = await getPhotos();
+    const [loadedPhotos, loadedVideos] = await Promise.all([
+      getPhotos(),
+      getVideos(),
+    ]);
     setPhotos(loadedPhotos);
+    setVideos(loadedVideos);
     setIsLoading(false);
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadPhotos();
+    await loadMedia();
     setIsRefreshing(false);
   };
 
@@ -143,10 +164,10 @@ export default function GalleryScreen() {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === photos.length) {
+    if (selectedIds.size === mediaItems.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(photos.map(p => p.id)));
+      setSelectedIds(new Set(mediaItems.map(m => m.id)));
     }
   };
 
@@ -154,18 +175,28 @@ export default function GalleryScreen() {
     if (selectedIds.size === 0) return;
 
     Alert.alert(
-      'Delete Photos',
-      `Delete ${selectedIds.size} photo${selectedIds.size > 1 ? 's' : ''}?`,
+      'Delete Items',
+      `Delete ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deletePhotos(Array.from(selectedIds));
+            const selectedMedia = mediaItems.filter(m => selectedIds.has(m.id));
+            const photoIds = selectedMedia.filter(m => m.type === 'photo').map(m => m.id);
+            const videoIds = selectedMedia.filter(m => m.type === 'video').map(m => m.id);
+
+            if (photoIds.length > 0) {
+              await deletePhotos(photoIds);
+            }
+            for (const vid of videoIds) {
+              await deleteVideo(vid);
+            }
+
             setSelectedIds(new Set());
             setIsSelectMode(false);
-            loadPhotos();
+            loadMedia();
           },
         },
       ]
@@ -175,12 +206,12 @@ export default function GalleryScreen() {
   const handleShareSelected = async () => {
     if (selectedIds.size === 0) return;
 
-    const selectedPhotos = photos.filter(p => selectedIds.has(p.id));
-    const urls = selectedPhotos.map(p => p.uri);
+    const selectedMedia = mediaItems.filter(m => selectedIds.has(m.id));
+    const urls = selectedMedia.map(m => m.uri);
 
     try {
       await Share.share({
-        message: `${selectedIds.size} photos from Cam`,
+        message: `${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''} from Cam`,
         url: urls[0], // iOS only supports one URL
       });
     } catch (error) {
@@ -188,15 +219,17 @@ export default function GalleryScreen() {
     }
   };
 
-  const handleItemPress = (item: Photo) => {
+  const handleItemPress = (item: MediaItem) => {
     if (isSelectMode) {
       toggleSelect(item.id);
-    } else {
+    } else if (item.type === 'photo') {
       navigation.navigate('PhotoViewer', { photo: item });
+    } else {
+      navigation.navigate('VideoViewer', { video: item });
     }
   };
 
-  const handleItemLongPress = (item: Photo) => {
+  const handleItemLongPress = (item: MediaItem) => {
     if (!isSelectMode) {
       setIsSelectMode(true);
       setSelectedIds(new Set([item.id]));
@@ -210,9 +243,16 @@ export default function GalleryScreen() {
     setPhotos(prev => prev.filter(p => p.id !== photoId));
   };
 
-  const renderItem = ({ item, index }: { item: Photo; index: number }) => {
-    const film = getFilmStockById(item.filmStock);
+  // Helper to format video duration
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const renderItem = ({ item, index }: { item: MediaItem; index: number }) => {
     const isSelected = selectedIds.has(item.id);
+    const isVideo = item.type === 'video';
 
     return (
       <TouchableOpacity
@@ -225,8 +265,24 @@ export default function GalleryScreen() {
         <Image
           source={{ uri: item.uri }}
           style={styles.thumbnail}
-          onError={() => handleImageError(item.id)}
+          onError={() => !isVideo && handleImageError(item.id)}
         />
+
+        {/* Video play overlay */}
+        {isVideo && !isSelectMode && (
+          <View style={styles.videoOverlay}>
+            <PlayIcon />
+          </View>
+        )}
+
+        {/* Video duration badge */}
+        {isVideo && !isSelectMode && (
+          <View style={styles.videoDurationBadge}>
+            <Text style={styles.videoDurationText}>
+              {formatDuration((item as Video).duration)}
+            </Text>
+          </View>
+        )}
 
         {/* Selection overlay */}
         {isSelectMode && (
@@ -235,20 +291,22 @@ export default function GalleryScreen() {
           </View>
         )}
 
-        {/* Film indicator - hide in select mode */}
-        {!isSelectMode && (
+        {/* Film indicator - only for photos, hide in select mode */}
+        {!isSelectMode && !isVideo && (
           <View style={styles.filmIndicator}>
             <View style={[styles.filmDot, {
-              backgroundColor: film.isBlackAndWhite ? '#888' : film.overlayColor.replace('0.', '0.8')
+              backgroundColor: getFilmStockById((item as Photo).filmStock).isBlackAndWhite
+                ? '#888'
+                : getFilmStockById((item as Photo).filmStock).overlayColor.replace('0.', '0.8')
             }]} />
           </View>
         )}
 
-        {/* Frame number - hide in select mode */}
-        {!isSelectMode && (
+        {/* Frame number - only for photos, hide in select mode */}
+        {!isSelectMode && !isVideo && (
           <View style={styles.frameNumberBadge}>
             <Text style={styles.frameNumberText}>
-              {String(item.frameNumber || index + 1).padStart(2, '0')}
+              {String((item as Photo).frameNumber || index + 1).padStart(2, '0')}
             </Text>
           </View>
         )}
@@ -285,6 +343,12 @@ export default function GalleryScreen() {
           <Text style={styles.statValue}>{photos.length}</Text>
           <Text style={styles.statLabel}>PHOTOS</Text>
         </View>
+        {videos.length > 0 && (
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{videos.length}</Text>
+            <Text style={styles.statLabel}>VIDEOS</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -320,7 +384,7 @@ export default function GalleryScreen() {
             <Text style={styles.headerTitle}>Gallery</Text>
           </View>
 
-          {photos.length > 0 ? (
+          {mediaItems.length > 0 ? (
             <TouchableOpacity onPress={toggleSelectMode} style={styles.selectButton}>
               <Text style={styles.selectButtonText}>Select</Text>
             </TouchableOpacity>
@@ -331,11 +395,11 @@ export default function GalleryScreen() {
       )}
 
       {/* Content */}
-      {!isLoading && photos.length === 0 ? (
+      {!isLoading && mediaItems.length === 0 ? (
         renderEmptyState()
       ) : (
         <FlatList
-          data={photos}
+          data={mediaItems}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           numColumns={COLUMN_COUNT}
@@ -343,7 +407,7 @@ export default function GalleryScreen() {
             styles.gridContent,
             isSelectMode && styles.gridContentWithActionBar
           ]}
-          ListHeaderComponent={photos.length > 0 && !isSelectMode ? renderHeader : null}
+          ListHeaderComponent={mediaItems.length > 0 && !isSelectMode ? renderHeader : null}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -599,6 +663,26 @@ const iconStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.textDim,
   },
+  // Play icon for videos
+  playContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playTriangle: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 14,
+    borderTopWidth: 9,
+    borderBottomWidth: 9,
+    borderLeftColor: COLORS.white,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    marginLeft: 4,
+  },
 });
 
 const styles = StyleSheet.create({
@@ -739,6 +823,28 @@ const styles = StyleSheet.create({
   },
   frameNumberText: {
     color: COLORS.text,
+    fontSize: 10,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  // Video styles
+  videoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  videoDurationBadge: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  videoDurationText: {
+    color: COLORS.white,
     fontSize: 10,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

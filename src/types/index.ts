@@ -10,6 +10,13 @@ export interface Photo {
   rollId: string;
 }
 
+export interface Video {
+  id: string;
+  uri: string;
+  date: string;
+  duration: number;
+}
+
 export interface FilmRoll {
   id: string;
   startDate: string;
@@ -33,6 +40,7 @@ export type RootStackParamList = {
   Camera: undefined;
   Gallery: undefined;
   PhotoViewer: { photo: Photo };
+  VideoViewer: { video: Video };
   FilmPicker: undefined;
   Settings: undefined;
 };
