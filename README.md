@@ -4,6 +4,15 @@ A premium React Native mobile app that faithfully emulates the shooting experien
 
 ## Features
 
+## App Previews
+
+<p align="center">
+  <img src="src/sample/preview_1.jpg" width="30%" />
+  <img src="src/sample/preview_2.jpg" width="30%" />
+  <img src="src/sample/preview_3.jpg" width="30%" />
+</p>
+
+## Features
 ### Camera
 - **Half-Frame Format** - Authentic 2:3 vertical aspect ratio (17×24mm)
 - **6 Film Stock Simulations** - Kodak Gold 200, Portra 400, Ektar 100, Fuji Superia 400, CineStill 800T, Ilford HP5
