@@ -16,6 +16,10 @@ import {
   Platform,
 } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { FilteredCamera } from '../components/FilteredCamera';
+import { NativeModules } from 'react-native';
+
+const { FilteredCameraModule } = NativeModules;
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // Safe import of geolocation - will gracefully handle if not available
@@ -262,17 +266,35 @@ export default function CameraScreen() {
   };
 
   const onTakePhoto = async () => {
-    if (!camera.current || isTakingPhoto || isProcessing) return;
+    // On iOS, we use FilteredCameraModule; on Android, we use VisionCamera
+    if (Platform.OS !== 'ios' && !camera.current) return;
+    if (isTakingPhoto || isProcessing) return;
 
     setIsTakingPhoto(true);
     animateShutter();
     Vibration.vibrate(10);
 
     try {
-      const photo = await camera.current.takePhoto({
-        flash: flashMode,
-        enableShutterSound: soundEnabled,
-      });
+      let photoPath: string;
+      let photoWidth: number = 1920; // Default dimensions
+      let photoHeight: number = 1080;
+
+      if (Platform.OS === 'ios' && FilteredCameraModule) {
+        // Use FilteredCamera native module on iOS
+        const result = await FilteredCameraModule.takePhoto({});
+        photoPath = result.path;
+      } else if (camera.current) {
+        // Use VisionCamera on Android
+        const photo = await camera.current.takePhoto({
+          flash: flashMode,
+          enableShutterSound: soundEnabled,
+        });
+        photoPath = photo.path;
+        photoWidth = photo.width;
+        photoHeight = photo.height;
+      } else {
+        throw new Error('No camera available');
+      }
 
       setIsProcessing(true);
       setIsTakingPhoto(false);
@@ -285,7 +307,7 @@ export default function CameraScreen() {
         return undefined;
       };
 
-      const processedResult = await processAndSavePhoto(photo.path, {
+      const processedResult = await processAndSavePhoto(photoPath, {
         filmId: selectedFilmId,
         addDateStamp: dateStampEnabled,
         addGrain: true,
@@ -295,8 +317,8 @@ export default function CameraScreen() {
 
       await savePhoto(
         processedResult.path,
-        processedResult.width || photo.width,
-        processedResult.height || photo.height,
+        processedResult.width || photoWidth,
+        processedResult.height || photoHeight,
         selectedFilmId,
         dateStampEnabled,
         0,
@@ -378,26 +400,37 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <Camera
-        ref={camera}
-        style={StyleSheet.absoluteFill}
-        device={currentDevice}
-        isActive={true}
-        photo={true}
-        video={true}
-      />
-
-      {/* Color overlay for filter preview */}
-      {selectedFilm.id !== 'clean_raw' && (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: selectedFilm.overlayColor,
-              pointerEvents: 'none'
-            }
-          ]}
+      {/* Use FilteredCamera on iOS for real-time LUT preview */}
+      {Platform.OS === 'ios' ? (
+        <FilteredCamera
+          style={StyleSheet.absoluteFill}
+          filterId={selectedFilmId}
+          position={cameraPosition}
+          isActive={true}
         />
+      ) : (
+        <>
+          <Camera
+            ref={camera}
+            style={StyleSheet.absoluteFill}
+            device={currentDevice}
+            isActive={true}
+            photo={true}
+            video={true}
+          />
+          {/* Color overlay for filter preview on Android */}
+          {selectedFilm.id !== 'clean_raw' && (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: selectedFilm.overlayColor,
+                  pointerEvents: 'none',
+                }
+              ]}
+            />
+          )}
+        </>
       )}
 
       {/* Top Bar */}
