@@ -3,12 +3,11 @@
 A premium React Native mobile app that faithfully emulates the shooting experience of a **Pentax 17 half-frame film camera**. Capture the nostalgic aesthetic of analog photography with authentic film stock simulations and a beautifully crafted retro UI.
 
 ## App Previews
+
 <video src="sample/ScreenRecording_12-03-2025%2002-25-02_1%20(1).MP4" controls width="100%"></video>
-[**🎥 Watch the Demo Video**](sample/ScreenRecording_12-03-2025%2002-25-02_1%20(1).MP4)
 
 <p align="center">
   <img src="sample/processed_1764856343091.JPG" width="30%" />
-
   <img src="sample/processed_1764856834644.JPG" width="30%" />
   <img src="sample/processed_1764865810627.JPG" width="30%" />
   <img src="sample/processed_1764868291676.JPG" width="30%" />
