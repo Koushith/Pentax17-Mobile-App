@@ -2,17 +2,24 @@
 
 A premium React Native mobile app that faithfully emulates the shooting experience of a **Pentax 17 half-frame film camera**. Capture the nostalgic aesthetic of analog photography with authentic film stock simulations and a beautifully crafted retro UI.
 
-## Features
-
 ## App Previews
 
 <p align="center">
-  <img src="src/sample/preview_1.jpg" width="30%" />
-  <img src="src/sample/preview_2.jpg" width="30%" />
-  <img src="src/sample/preview_3.jpg" width="30%" />
+  <img src="sample/processed_1764856343091.JPG" width="30%" />
+  <img src="sample/processed_1764856393965.JPG" width="30%" />
+  <img src="sample/processed_1764856834644.JPG" width="30%" />
+  <img src="sample/processed_1764865810627.JPG" width="30%" />
+  <img src="sample/processed_1764868291676.JPG" width="30%" />
+  <img src="sample/processed_1764884537031.JPG" width="30%" />
+  <img src="sample/processed_1764885586604.JPG" width="30%" />
+  <img src="sample/processed_1764885624543.JPG" width="30%" />
+  <img src="sample/processed_1764886491809.JPG" width="30%" />
+  <img src="sample/processed_1764927341899.JPG" width="30%" />
+  <img src="sample/processed_1764927586680.JPG" width="30%" />
 </p>
 
 ## Features
+
 ### Camera
 - **Half-Frame Format** - Authentic 2:3 vertical aspect ratio (17×24mm)
 - **6 Film Stock Simulations** - Kodak Gold 200, Portra 400, Ektar 100, Fuji Superia 400, CineStill 800T, Ilford HP5
