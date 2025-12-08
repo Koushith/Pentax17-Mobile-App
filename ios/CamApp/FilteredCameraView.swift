@@ -105,9 +105,7 @@ class FilteredCameraView: UIView {
     }
     
     private func setupView() {
-        // PROBE: Set to BLUE to verify code update on user device. 
-        // If user sees GREEN, build is stale. If BLUE, code updated.
-        self.backgroundColor = .blue 
+        self.backgroundColor = .black 
         
         FilteredCameraModule.setActiveCamera(self)
         preloadLUTs()
@@ -221,7 +219,7 @@ class FilteredCameraView: UIView {
                 var floats: [Float] = []
                 for line in data.components(separatedBy: .newlines) {
                     if line.hasPrefix("LUT_3D_SIZE"), let s = Int(line.components(separatedBy: " ").last ?? "") { size = s }
-                    else if !line.isEmpty && !line.hasPrefix("#") && !line.hasPrefix("TITLE") {
+                    else if !line.isEmpty && !line.hasPrefix("TITLE") && !line.hasPrefix("#") {
                         let parts = line.components(separatedBy: " ").compactMap { Float($0) }
                         if parts.count == 3 { floats.append(contentsOf: parts); floats.append(1.0) }
                     }
@@ -253,10 +251,6 @@ class FilteredCameraView: UIView {
     
     func capturePhoto(resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
         let settings = AVCapturePhotoSettings()
-        let delegate = PhotoDelegate(resolver: resolver, rejecter: rejecter)
-        // Retain delegate? PhotoOutput does not retain delegate. We need to hold it.
-        // Quick hack: Use objc_setAssociatedObject on the settings or View? 
-        // Better: Make FilteredCameraView conform to delegate and store the completion blocks.
         // Reverting to self-delegate for simplicity
         
         self.pendingResolver = resolver
@@ -316,15 +310,5 @@ extension FilteredCameraView: AVCapturePhotoCaptureDelegate {
         }
         pendingResolver = nil
         pendingRejecter = nil
-    }
-}
-
-// Separate helper class unused, implementing locally.
-class PhotoDelegate: NSObject, AVCapturePhotoCaptureDelegate {
-    let resolver: RCTPromiseResolveBlock
-    let rejecter: RCTPromiseRejectBlock
-    init(resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-        self.resolver = resolver
-        self.rejecter = rejecter
     }
 }
