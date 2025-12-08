@@ -4,6 +4,8 @@ A premium React Native mobile app that faithfully emulates the shooting experien
 
 ## App Previews
 
+[**🎥 Watch the Demo Video**](sample/ScreenRecording_12-03-2025%2002-25-02_1%20(1).MP4)
+
 <p align="center">
   <img src="sample/processed_1764856343091.JPG" width="30%" />
   <img src="sample/processed_1764856393965.JPG" width="30%" />
