@@ -12,12 +12,8 @@ A premium React Native mobile app that faithfully emulates the shooting experien
   <img src="sample/processed_1764856834644.JPG" width="30%" />
   <img src="sample/processed_1764865810627.JPG" width="30%" />
   <img src="sample/processed_1764868291676.JPG" width="30%" />
-  <img src="sample/processed_1764884537031.JPG" width="30%" />
-  <img src="sample/processed_1764885586604.JPG" width="30%" />
-  <img src="sample/processed_1764885624543.JPG" width="30%" />
-  <img src="sample/processed_1764886491809.JPG" width="30%" />
-  <img src="sample/processed_1764927341899.JPG" width="30%" />
-  <img src="sample/processed_1764927586680.JPG" width="30%" />
+  <img src="sample/IMG_9291.PNG" width="30%" />
+  <img src="sample/gallery.PNG" width="30%" />
 </p>
 
 ## Features
